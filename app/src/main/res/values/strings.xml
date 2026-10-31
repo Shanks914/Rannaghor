@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Rannaghor</string>
+    <string name="tagline">What can you cook today?</string>
+    <string name="hint_ingredient">Type an ingredient…</string>
+    <string name="find_recipes">Find recipes</string>
+    <string name="searching">Searching recipes…</string>
+    <string name="no_recipes_found">No recipes matched those ingredients. Try removing one.</string>
+    <string name="no_favorites_yet">No favourites yet. Tap the heart on a recipe to save it.</string>
+    <string name="start_cooking">Start Cooking</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="instructions">Instructions</string>
+    <string name="ingredient_row_format">%1$s — %2$s</string>
+    <string name="add_to_plan">Add to plan</string>
+    <string name="add_item">Add item</string>
+    <string name="share_list">Share list</string>
+    <string name="start_timer">Start timer (5 min)</string>
+    <string name="next_step">Next</string>
+    <string name="previous_step">Back</string>
+    <string name="skip_login">Skip for now</string>
+    <string name="log_in">Log in</string>
+</resources>

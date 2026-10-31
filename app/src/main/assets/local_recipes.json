@@ -1,0 +1,23 @@
+[
+  {
+    "id": "local_1",
+    "name": "Bhuna Khichuri",
+    "imageUrl": "",
+    "instructions": "Wash rice and lentils together. Heat oil, fry onion, ginger-garlic paste and spices. Add rice and lentils, stir for 2 minutes. Add hot water and salt, cook on low heat until soft, about 20 minutes. Rest 5 minutes before serving.",
+    "ingredients": "Rice:1 cup|Moong dal:0.5 cup|Onion:1 sliced|Ginger garlic paste:1 tbsp|Turmeric:0.5 tsp|Cumin powder:0.5 tsp|Bay leaf:1|Oil:2 tbsp|Salt:to taste|Water:3 cups"
+  },
+  {
+    "id": "local_2",
+    "name": "Begun Bhorta",
+    "imageUrl": "",
+    "instructions": "Roast the whole eggplant over a flame or in the oven until the skin is charred and the inside is soft. Peel and mash it. Mix in chopped onion, green chili, mustard oil, salt and coriander leaves.",
+    "ingredients": "Eggplant:1 large|Onion:1 chopped|Green chili:2 chopped|Mustard oil:2 tbsp|Salt:to taste|Coriander leaves:a handful"
+  },
+  {
+    "id": "local_3",
+    "name": "Dim Bhuna (Egg Curry)",
+    "imageUrl": "",
+    "instructions": "Boil and peel the eggs, then lightly fry them. Make a masala with onion, tomato, ginger garlic paste and spices. Add the eggs to the masala, add a little water, and simmer for 10 minutes.",
+    "ingredients": "Eggs:4 boiled|Onion:1 chopped|Tomato:1 chopped|Ginger garlic paste:1 tbsp|Turmeric:0.5 tsp|Chili powder:0.5 tsp|Oil:3 tbsp|Salt:to taste"
+  }
+]
