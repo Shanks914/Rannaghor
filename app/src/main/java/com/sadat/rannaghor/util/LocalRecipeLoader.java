@@ -20,11 +20,8 @@ import com.sadat.rannaghor.model.Recipe;
  * network, and it fills the gap left by TheMealDB having very few
  * Bangladeshi dishes.
  *
- * NOT wired into the search screen yet in this starter project - call
- * loadAll(context) from RecipeRepository.searchByIngredients() and merge
- * the results with the API ones (match on ingredient names) once your
- * core API search is working. Keeping it separate for now keeps the
- * first version of search simple to debug.
+ * The recipes are merged into ingredient search and are also available
+ * directly in the meal planner's recipe picker.
  */
 public class LocalRecipeLoader {
 

@@ -11,7 +11,7 @@ Read this whole file once before you touch anything.
 - Home screen: add ingredients, search TheMealDB, ranked results, and bundled local recipes
 - Recipe detail screen: ingredients + instructions, favourite toggle
 - Room database: favourites, meal plan, shopping list (all local/offline)
-- Planner screen (basic — add/remove by typing a recipe name)
+- Planner screen (browse days, add/remove saved or bundled recipes by meal slot)
 - Shopping list screen (add/check off/share via Intent)
 - Cooking mode with step-by-step instructions
 - CookingTimerService (background timer) + TimerReceiver (notifies when done)
@@ -23,11 +23,11 @@ Read this whole file once before you touch anything.
 
 1. **Firebase is not wired up.** `LoginActivity` has a "Skip" button so you can run the
    app immediately. You still need to do Step 8 below to add real login + backup.
-2. **The planner is basic.** It currently shows one selected date and accepts a typed
-   recipe name. Upgrade it to choose a saved or searched recipe and navigate the week.
-3. **The planner's "Add" dialog takes a typed recipe name**, not a real recipe link.
-   A better version lets the user pick from their favourites or a fresh search —
-   worth upgrading once the rest works.
+2. **The planner can be expanded further.** It navigates one day at a time and offers
+   favourites plus bundled recipes. A full week-at-a-glance grid and recent search
+   results picker would be useful follow-up improvements.
+3. **The planner uses saved favourites and bundled recipes.** Recipes from new
+   TheMealDB searches must be saved as favourites before they appear in the picker.
 4. **Icons are placeholder vector shapes.** Swap them for nicer ones (Android Studio's
    Vector Asset tool, from the Material Icons set) once the app runs.
 5. **No automated tests.** Not required by your syllabus, but mention in your report
