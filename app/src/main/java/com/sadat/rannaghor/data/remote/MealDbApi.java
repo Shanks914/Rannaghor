@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,7 +136,11 @@ public class MealDbApi {
     }
 
     private String urlEncode(String s) {
-        return URLEncoder.encode(s.trim(), StandardCharsets.UTF_8);
+        try {
+            return URLEncoder.encode(s.trim(), "UTF-8");
+        } catch (UnsupportedEncodingException impossible) {
+            return s.trim();
+        }
     }
 
     private void postSuccess(ApiCallback callback, List<Recipe> results) {
