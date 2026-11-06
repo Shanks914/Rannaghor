@@ -76,7 +76,7 @@ public final class CloudBackupManager {
                     for (ShoppingItem item : shoppingItems.values()) db.shoppingDao().insert(item);
                 });
 
-                backup.set(makeBackup(favorites, plans, shoppingItems))
+                backup.set(makeBackup(favorites.values(), plans.values(), shoppingItems.values()))
                         .addOnSuccessListener(unused -> complete(callback, null))
                         .addOnFailureListener(error -> complete(callback, error));
             } catch (Exception error) {
