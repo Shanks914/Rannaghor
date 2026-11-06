@@ -162,6 +162,7 @@ public class RecipeRepository {
         dbExecutor.execute(() -> {
             recipe.isFavorite = !recipe.isFavorite;
             db.recipeDao().insert(recipe); // insert = REPLACE, acts as upsert
+            CloudBackupManager.backup(appContext);
             if (onDone != null) mainThread.post(onDone);
         });
     }

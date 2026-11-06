@@ -26,4 +26,7 @@ public interface MealPlanDao {
 
     @Query("SELECT * FROM meal_plan")
     List<MealPlanEntry> getAll();
+
+    @Query("DELETE FROM meal_plan")
+    void clearAll();
 }

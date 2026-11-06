@@ -1,7 +1,11 @@
 plugins {
     id 'com.android.application'
-    // Uncomment the line below ONLY after you add google-services.json (see README)
-    // id 'com.google.gms.google-services'
+}
+
+// Firebase configuration is user-specific. Apply the plugin only after the
+// user adds app/google-services.json so the app can still build before setup.
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
 }
 
 android {
@@ -46,10 +50,10 @@ dependencies {
     // Image loading
     implementation 'com.github.bumptech.glide:glide:4.16.0'
 
-    // Firebase - uncomment after completing the Firebase console setup (see README)
-    // implementation platform('com.google.firebase:firebase-bom:33.1.2')
-    // implementation 'com.google.firebase:firebase-auth'
-    // implementation 'com.google.firebase:firebase-firestore'
+    // Firebase Authentication and Firestore cloud backup
+    implementation platform('com.google.firebase:firebase-bom:35.1.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'

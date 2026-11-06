@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.local.AppDatabase;
+import com.sadat.rannaghor.data.repository.CloudBackupManager;
 import com.sadat.rannaghor.model.MealPlanEntry;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.util.LocalRecipeLoader;
@@ -104,6 +105,7 @@ public class PlannerActivity extends AppCompatActivity {
 
         executor.execute(() -> {
             AppDatabase.getInstance(getApplicationContext()).mealPlanDao().insert(entry);
+            CloudBackupManager.backup(getApplicationContext());
             runOnUiThread(this::loadPlanForDate);
         });
     }
@@ -113,6 +115,7 @@ public class PlannerActivity extends AppCompatActivity {
                 .setMessage("Remove " + entry.recipeName + " from the plan?")
                 .setPositiveButton("Remove", (d, w) -> executor.execute(() -> {
                     AppDatabase.getInstance(getApplicationContext()).mealPlanDao().delete(entry);
+                    CloudBackupManager.backup(getApplicationContext());
                     runOnUiThread(this::loadPlanForDate);
                 }))
                 .setNegativeButton("Cancel", null)

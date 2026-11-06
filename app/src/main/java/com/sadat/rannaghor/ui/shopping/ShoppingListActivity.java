@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.local.AppDatabase;
+import com.sadat.rannaghor.data.repository.CloudBackupManager;
 import com.sadat.rannaghor.model.ShoppingItem;
 
 import java.util.List;
@@ -60,13 +61,17 @@ public class ShoppingListActivity extends AppCompatActivity {
         item.isChecked = false;
         executor.execute(() -> {
             AppDatabase.getInstance(this).shoppingDao().insert(item);
+            CloudBackupManager.backup(getApplicationContext());
             runOnUiThread(this::loadItems);
         });
     }
 
     private void onToggleItem(ShoppingItem item, boolean checked) {
         item.isChecked = checked;
-        executor.execute(() -> AppDatabase.getInstance(this).shoppingDao().update(item));
+        executor.execute(() -> {
+            AppDatabase.getInstance(this).shoppingDao().update(item);
+            CloudBackupManager.backup(getApplicationContext());
+        });
     }
 
     private void loadItems() {

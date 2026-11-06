@@ -21,4 +21,12 @@
     <string name="previous_step">Back</string>
     <string name="skip_login">Skip for now</string>
     <string name="log_in">Log in</string>
+    <string name="email_address">Email address</string>
+    <string name="password">Password (at least 6 characters)</string>
+    <string name="create_account">Create account</string>
+    <string name="firebase_setup_needed">Firebase is not configured yet. Add app/google-services.json to enable login.</string>
+    <string name="firebase_login_failed">Could not sign in: %1$s</string>
+    <string name="firebase_signup_failed">Could not create account: %1$s</string>
+    <string name="cloud_sync_failed">Signed in, but cloud backup could not sync: %1$s</string>
+    <string name="cloud_sync_succeeded">Your data is backed up.</string>
 </resources>

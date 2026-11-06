@@ -29,6 +29,9 @@ public interface RecipeDao {
     @Query("SELECT * FROM recipe WHERE isFavorite = 1 ORDER BY name ASC")
     List<Recipe> getFavorites();
 
+    @Query("DELETE FROM recipe WHERE isFavorite = 1")
+    void deleteFavorites();
+
     @Query("SELECT * FROM recipe")
     List<Recipe> getAll();
 }
