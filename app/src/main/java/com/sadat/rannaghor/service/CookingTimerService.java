@@ -54,6 +54,7 @@ public class CookingTimerService extends Service {
             public void onFinish() {
                 Intent finished = new Intent(ACTION_TIMER_FINISHED);
                 finished.setPackage(getPackageName());
+                finished.putExtra(EXTRA_STEP_LABEL, stepLabel);
                 sendBroadcast(finished);
                 stopForeground(true);
                 stopSelf();

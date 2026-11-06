@@ -11,6 +11,8 @@ import com.sadat.rannaghor.service.CookingTimerService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Step-by-step cooking mode. TheMealDB returns instructions as one block
@@ -19,9 +21,14 @@ import java.util.List;
  */
 public class CookingActivity extends AppCompatActivity {
 
+    private static final int DEFAULT_TIMER_SECONDS = 300;
+    private static final Pattern DURATION_PATTERN = Pattern.compile(
+            "(?i)(\\d+)\\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?)\\b");
+
     private List<String> steps = new ArrayList<>();
     private int currentStep = 0;
     private TextView stepCounter, stepText;
+    private Button startTimerButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +45,7 @@ public class CookingActivity extends AppCompatActivity {
 
         Button next = findViewById(R.id.buttonNextStep);
         Button back = findViewById(R.id.buttonPrevStep);
-        Button startTimer = findViewById(R.id.buttonStartTimer);
+        startTimerButton = findViewById(R.id.buttonStartTimer);
 
         next.setOnClickListener(v -> {
             if (currentStep < steps.size() - 1) {
@@ -52,8 +59,8 @@ public class CookingActivity extends AppCompatActivity {
                 renderStep();
             }
         });
-        startTimer.setOnClickListener(v ->
-                CookingTimerService.start(this, 300, "Step " + (currentStep + 1))); // default 5 min, adjust per step
+        startTimerButton.setOnClickListener(v ->
+                CookingTimerService.start(this, getCurrentStepDurationSeconds(), "Step " + (currentStep + 1)));
 
         renderStep();
     }
@@ -78,5 +85,30 @@ public class CookingActivity extends AppCompatActivity {
     private void renderStep() {
         stepCounter.setText((currentStep + 1) + " / " + steps.size());
         stepText.setText(steps.get(currentStep));
+        int seconds = getCurrentStepDurationSeconds();
+        startTimerButton.setText(getString(R.string.start_timer_dynamic, formatDuration(seconds)));
+    }
+
+    private int getCurrentStepDurationSeconds() {
+        Matcher matcher = DURATION_PATTERN.matcher(steps.get(currentStep));
+        if (!matcher.find()) return DEFAULT_TIMER_SECONDS;
+
+        int amount;
+        try {
+            amount = Integer.parseInt(matcher.group(1));
+        } catch (NumberFormatException error) {
+            return DEFAULT_TIMER_SECONDS;
+        }
+        String unit = matcher.group(2).toLowerCase(java.util.Locale.ROOT);
+        if (unit.startsWith("hour") || unit.startsWith("hr")) return amount * 3600;
+        if (unit.startsWith("min") || unit.startsWith("m")) return amount * 60;
+        return amount;
+    }
+
+    private String formatDuration(int seconds) {
+        if (seconds >= 3600 && seconds % 3600 == 0) return (seconds / 3600) + " hr";
+        if (seconds >= 60 && seconds % 60 == 0) return (seconds / 60) + " min";
+        if (seconds > 60) return (seconds / 60) + " min " + (seconds % 60) + " sec";
+        return seconds + " sec";
     }
 }

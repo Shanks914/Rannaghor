@@ -16,7 +16,12 @@
     <string name="next_day">Next day</string>
     <string name="add_item">Add item</string>
     <string name="share_list">Share list</string>
+    <string name="generate_shopping_list">Generate from this week’s meals</string>
+    <string name="no_meals_this_week">No meals are planned this week yet.</string>
+    <string name="no_ingredients_in_meals">No recipe ingredients found for this week’s planned meals.</string>
+    <string name="shopping_list_generated">Shopping list updated from %1$d planned meals (%2$d ingredients).</string>
     <string name="start_timer">Start timer (5 min)</string>
+    <string name="start_timer_dynamic">Start timer (%1$s)</string>
     <string name="next_step">Next</string>
     <string name="previous_step">Back</string>
     <string name="skip_login">Skip for now</string>

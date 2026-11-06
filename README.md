@@ -8,8 +8,8 @@ Rannaghor is a Java Android app that helps users find recipes from ingredients t
 - Search three bundled Bangladeshi recipes: Bhuna Khichuri, Begun Bhorta, and Dim Bhuna.
 - View recipe details and save favourites locally with Room.
 - Plan meals by day using favourites or bundled recipes.
-- Manage and share a shopping list.
-- Follow cooking steps and run a background timer.
+- Generate a merged shopping list from this week’s meal plan, add items manually, check them off, and share the list.
+- Follow cooking steps and run a background timer based on the step’s stated duration, with a five-minute default.
 - Schedule a daily meal-planning reminder.
 
 ## Tech stack
