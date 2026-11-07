@@ -1,7 +1,6 @@
 package com.sadat.rannaghor.ui.cooking;
 
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,7 +27,7 @@ public class CookingActivity extends AppCompatActivity {
     private List<String> steps = new ArrayList<>();
     private int currentStep = 0;
     private TextView stepCounter, stepText;
-    private Button startTimerButton;
+    private TextView startTimerButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +42,8 @@ public class CookingActivity extends AppCompatActivity {
         stepCounter = findViewById(R.id.textStepCounter);
         stepText = findViewById(R.id.textStepContent);
 
-        Button next = findViewById(R.id.buttonNextStep);
-        Button back = findViewById(R.id.buttonPrevStep);
+        TextView next = findViewById(R.id.buttonNextStep);
+        TextView back = findViewById(R.id.buttonPrevStep);
         startTimerButton = findViewById(R.id.buttonStartTimer);
 
         next.setOnClickListener(v -> {
