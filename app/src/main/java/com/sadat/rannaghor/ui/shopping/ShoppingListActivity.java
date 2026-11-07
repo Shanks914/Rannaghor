@@ -3,6 +3,7 @@ package com.sadat.rannaghor.ui.shopping;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,6 +35,8 @@ public class ShoppingListActivity extends AppCompatActivity {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private ShoppingAdapter adapter;
+    private Calendar selectedWeekStart;
+    private TextView selectedWeekLabel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +44,11 @@ public class ShoppingListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_shopping_list);
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
+        selectedWeekStart = getWeekStart(Calendar.getInstance());
+        selectedWeekLabel = findViewById(R.id.textSelectedWeek);
+        findViewById(R.id.buttonPreviousWeek).setOnClickListener(v -> changeWeek(-1));
+        findViewById(R.id.buttonNextWeek).setOnClickListener(v -> changeWeek(1));
+        updateWeekLabel();
 
         RecyclerView recyclerView = findViewById(R.id.recyclerShopping);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -57,7 +65,7 @@ public class ShoppingListActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.buttonShareList).setOnClickListener(v -> shareList());
-        findViewById(R.id.buttonGenerateFromPlan).setOnClickListener(v -> generateFromThisWeek());
+        findViewById(R.id.buttonGenerateFromPlan).setOnClickListener(v -> generateFromSelectedWeek());
 
         loadItems();
     }
@@ -89,10 +97,10 @@ public class ShoppingListActivity extends AppCompatActivity {
         });
     }
 
-    private void generateFromThisWeek() {
+    private void generateFromSelectedWeek() {
         executor.execute(() -> {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
-            String[] week = getCurrentWeekRange();
+            String[] week = getSelectedWeekRange();
             List<MealPlanEntry> plannedMeals = db.mealPlanDao().getForWeek(week[0], week[1]);
             if (plannedMeals.isEmpty()) {
                 runOnUiThread(() -> Toast.makeText(this, R.string.no_meals_this_week, Toast.LENGTH_SHORT).show());
@@ -162,18 +170,44 @@ public class ShoppingListActivity extends AppCompatActivity {
         });
     }
 
-    private String[] getCurrentWeekRange() {
-        Calendar monday = Calendar.getInstance();
+    private Calendar getWeekStart(Calendar day) {
+        Calendar monday = (Calendar) day.clone();
         int daysSinceMonday = (monday.get(Calendar.DAY_OF_WEEK) + 5) % 7;
         monday.add(Calendar.DAY_OF_YEAR, -daysSinceMonday);
         monday.set(Calendar.HOUR_OF_DAY, 0);
         monday.set(Calendar.MINUTE, 0);
         monday.set(Calendar.SECOND, 0);
         monday.set(Calendar.MILLISECOND, 0);
+        return monday;
+    }
+
+    private String[] getSelectedWeekRange() {
+        Calendar monday = (Calendar) selectedWeekStart.clone();
         Calendar sunday = (Calendar) monday.clone();
         sunday.add(Calendar.DAY_OF_YEAR, 6);
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         return new String[]{format.format(monday.getTime()), format.format(sunday.getTime())};
+    }
+
+    private void changeWeek(int offset) {
+        selectedWeekStart.add(Calendar.WEEK_OF_YEAR, offset);
+        updateWeekLabel();
+    }
+
+    private void updateWeekLabel() {
+        Calendar end = (Calendar) selectedWeekStart.clone();
+        end.add(Calendar.DAY_OF_YEAR, 6);
+        String startText = new SimpleDateFormat("MMM d", Locale.getDefault()).format(selectedWeekStart.getTime());
+        String endText = new SimpleDateFormat("MMM d", Locale.getDefault()).format(end.getTime());
+        String year = new SimpleDateFormat("yyyy", Locale.getDefault()).format(end.getTime());
+        if (selectedWeekStart.get(Calendar.YEAR) == end.get(Calendar.YEAR)
+                && selectedWeekStart.get(Calendar.MONTH) == end.get(Calendar.MONTH)) {
+            startText = new SimpleDateFormat("MMM d", Locale.getDefault()).format(selectedWeekStart.getTime());
+            endText = new SimpleDateFormat("d", Locale.getDefault()).format(end.getTime());
+        } else if (selectedWeekStart.get(Calendar.YEAR) != end.get(Calendar.YEAR)) {
+            year = new SimpleDateFormat("yyyy", Locale.getDefault()).format(selectedWeekStart.getTime()) + " – " + year;
+        }
+        selectedWeekLabel.setText(startText + " – " + endText + ", " + year);
     }
 
     private String normalize(String name) {
