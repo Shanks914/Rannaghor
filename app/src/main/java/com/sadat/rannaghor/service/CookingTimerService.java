@@ -7,12 +7,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.ui.cooking.CookingActivity;
@@ -39,7 +41,13 @@ public class CookingTimerService extends Service {
         String stepLabel = intent != null ? intent.getStringExtra(EXTRA_STEP_LABEL) : "Cooking step";
 
         createChannelIfNeeded();
-        startForeground(NOTIFICATION_ID, buildNotification(stepLabel, seconds));
+        Notification foregroundNotification = buildNotification(stepLabel, seconds);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ServiceCompat.startForeground(this, NOTIFICATION_ID, foregroundNotification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        } else {
+            startForeground(NOTIFICATION_ID, foregroundNotification);
+        }
 
         if (countDownTimer != null) countDownTimer.cancel();
         countDownTimer = new CountDownTimer((long) seconds * 1000, 1000) {

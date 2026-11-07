@@ -9,7 +9,7 @@ Rannaghor is a Java Android app that helps users find recipes from ingredients t
 - View recipe details and save favourites locally with Room.
 - Plan meals by day using favourites or bundled recipes.
 - Generate a merged shopping list from this week’s meal plan, add items manually, check them off, and share the list.
-- Follow cooking steps and run a background timer based on the step’s stated duration, with a five-minute default.
+- Follow cooking steps; a background timer appears only on steps with a stated duration.
 - Schedule a daily meal-planning reminder.
 
 ## Tech stack
