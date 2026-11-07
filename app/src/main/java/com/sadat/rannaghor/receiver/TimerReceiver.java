@@ -30,7 +30,10 @@ public class TimerReceiver extends BroadcastReceiver {
         if (CookingTimerService.ACTION_TIMER_FINISHED.equals(intent.getAction())) {
             createNotificationChannel(context);
             String step = intent.getStringExtra(CookingTimerService.EXTRA_STEP_LABEL);
-            Intent openCooking = new Intent(context, CookingActivity.class);
+            Intent openCooking = new Intent(context, CookingActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .putExtra(CookingTimerService.EXTRA_TIMER_ONLY, true)
+                    .putExtra(CookingTimerService.EXTRA_STEP_LABEL, step);
             PendingIntent pendingIntent = PendingIntent.getActivity(
                     context, 1, openCooking,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
