@@ -5,5 +5,34 @@ service cloud.firestore {
     match /users/{userId}/backups/{backupId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    match /recipeReviews/{reviewId} {
+      function validReview() {
+        return request.resource.data.keys().hasAll(['recipeId', 'uid', 'recipeName', 'imageUrl', 'rating', 'review', 'updatedAt'])
+          && request.resource.data.keys().hasOnly(['recipeId', 'uid', 'recipeName', 'imageUrl', 'rating', 'review', 'updatedAt'])
+          && request.resource.data.recipeId is string
+          && request.resource.data.recipeId.size() > 0
+          && request.resource.data.uid is string
+          && request.resource.data.recipeName is string
+          && request.resource.data.imageUrl is string
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && request.resource.data.review is string
+          && request.resource.data.review.size() <= 1000
+          && request.resource.data.updatedAt is timestamp
+          && reviewId == request.resource.data.recipeId + '_' + request.auth.uid;
+      }
+
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.uid
+        && validReview();
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.uid
+        && request.auth.uid == request.resource.data.uid
+        && validReview();
+      allow delete: if request.auth != null && request.auth.uid == resource.data.uid;
+    }
   }
 }

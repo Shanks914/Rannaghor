@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+        <ImageButton android:id="@+id/buttonAuthBack" android:layout_width="42dp" android:layout_height="42dp" android:background="@android:color/transparent" android:src="@drawable/ic_back" android:contentDescription="Back" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="28dp" android:text="Join the table" android:textColor="@color/text_primary" android:textSize="30sp" android:textStyle="bold" android:fontFamily="@font/red_hat_display" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Sign in to rate recipes and share your review with the Rannaghor community." android:textColor="@color/text_secondary" android:textSize="15sp" />
+        <EditText android:id="@+id/editAuthEmail" android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="28dp" android:background="@drawable/bg_search_box" android:hint="Email address" android:inputType="textEmailAddress" android:paddingHorizontal="16dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" />
+        <EditText android:id="@+id/editAuthPassword" android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="12dp" android:background="@drawable/bg_search_box" android:hint="Password (at least 6 characters)" android:inputType="textPassword" android:paddingHorizontal="16dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" />
+        <TextView android:id="@+id/buttonAuthLogin" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="20dp" android:background="@drawable/bg_rounded_button" android:gravity="center" android:text="Log in" android:textColor="@color/white" android:textStyle="bold" />
+        <TextView android:id="@+id/buttonAuthCreate" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="10dp" android:background="@drawable/bg_rounded_card" android:gravity="center" android:text="Create an account" android:textColor="@color/primary" android:textStyle="bold" />
+    </LinearLayout>
+</ScrollView>

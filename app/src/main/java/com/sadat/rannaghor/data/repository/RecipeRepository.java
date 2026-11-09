@@ -133,6 +133,40 @@ public class RecipeRepository {
         }
     }
 
+    /** Search the API by dish name and include matching bundled recipes. */
+    public void searchByName(String query, SearchCallback callback) {
+        String cleaned = query == null ? "" : query.trim();
+        if (cleaned.isEmpty()) {
+            callback.onResult(new ArrayList<>());
+            return;
+        }
+        api.searchByName(cleaned, new ApiCallback() {
+            @Override public void onSuccess(List<Recipe> recipes) {
+                dbExecutor.execute(() -> {
+                    Map<String, Recipe> combined = new java.util.LinkedHashMap<>();
+                    for (Recipe recipe : recipes) combined.put(recipe.id, recipe);
+                    String needle = cleaned.toLowerCase(java.util.Locale.ROOT);
+                    for (Recipe local : LocalRecipeLoader.loadAll(appContext)) {
+                        if (local.name.toLowerCase(java.util.Locale.ROOT).contains(needle)) combined.put(local.id, local);
+                    }
+                    List<Recipe> result = new ArrayList<>(combined.values());
+                    mainThread.post(() -> callback.onResult(result));
+                });
+            }
+            @Override public void onError(String message) {
+                dbExecutor.execute(() -> {
+                    List<Recipe> localMatches = new ArrayList<>();
+                    String needle = cleaned.toLowerCase(java.util.Locale.ROOT);
+                    for (Recipe local : LocalRecipeLoader.loadAll(appContext)) {
+                        if (local.name.toLowerCase(java.util.Locale.ROOT).contains(needle)) localMatches.add(local);
+                    }
+                    if (localMatches.isEmpty()) mainThread.post(() -> callback.onError(message));
+                    else mainThread.post(() -> callback.onResult(localMatches));
+                });
+            }
+        });
+    }
+
     /** Loads recipes for a home-screen collection, combining relevant API searches with local dishes. */
     public void searchByCategory(String categoryId, SearchCallback callback) {
         List<java.util.function.Consumer<ApiCallback>> requests = new ArrayList<>();

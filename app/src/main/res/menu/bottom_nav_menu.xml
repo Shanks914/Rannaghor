@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/nav_home" android:title="Home" android:icon="@drawable/ic_home" />
-    <item android:id="@+id/nav_planner" android:title="Planner" android:icon="@drawable/ic_timer" />
-    <item android:id="@+id/nav_shopping" android:title="Shopping" android:icon="@drawable/ic_add" />
-    <item android:id="@+id/nav_favorites" android:title="Favorites" android:icon="@drawable/ic_heart_outline" />
-</menu>

@@ -171,6 +171,80 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="22dp"
                 android:layout_marginTop="24dp"
+                android:text="Explore Rannaghor"
+                android:textColor="@color/text_primary"
+                android:textSize="21sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/red_hat_display" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/actionHome" style="@style/HomeActionCard"
+                    android:layout_width="0dp" android:layout_height="104dp" android:layout_weight="1" android:layout_marginEnd="6dp">
+                    <LinearLayout style="@style/HomeActionContent">
+                        <ImageView style="@style/HomeActionIcon" android:src="@drawable/ic_home" android:contentDescription="Home" />
+                        <TextView style="@style/HomeActionLabel" android:text="Home" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/actionRecipes" style="@style/HomeActionCard"
+                    android:layout_width="0dp" android:layout_height="104dp" android:layout_weight="1" android:layout_marginStart="6dp" android:layout_marginEnd="6dp">
+                    <LinearLayout style="@style/HomeActionContent">
+                        <ImageView style="@style/HomeActionIcon" android:src="@drawable/ic_recipe_book" android:contentDescription="Recipes" />
+                        <TextView style="@style/HomeActionLabel" android:text="Recipes" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/actionPlanner" style="@style/HomeActionCard"
+                    android:layout_width="0dp" android:layout_height="104dp" android:layout_weight="1" android:layout_marginEnd="6dp">
+                    <LinearLayout style="@style/HomeActionContent">
+                        <ImageView style="@style/HomeActionIcon" android:src="@drawable/ic_calendar" android:contentDescription="Meal planner" />
+                        <TextView style="@style/HomeActionLabel" android:text="Planner" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/actionShopping" style="@style/HomeActionCard"
+                    android:layout_width="0dp" android:layout_height="104dp" android:layout_weight="1" android:layout_marginStart="6dp" android:layout_marginEnd="6dp">
+                    <LinearLayout style="@style/HomeActionContent">
+                        <ImageView style="@style/HomeActionIcon" android:src="@drawable/ic_shopping_list" android:contentDescription="Shopping list" />
+                        <TextView style="@style/HomeActionLabel" android:text="Shopping list" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/actionFavorites" style="@style/HomeActionCard"
+                    android:layout_width="0dp" android:layout_height="104dp" android:layout_weight="1" android:layout_marginEnd="6dp">
+                    <LinearLayout style="@style/HomeActionContent">
+                        <ImageView style="@style/HomeActionIcon" android:src="@drawable/ic_heart_filled" android:contentDescription="Favourites" />
+                        <TextView style="@style/HomeActionLabel" android:text="Favourites" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" android:layout_marginStart="6dp" android:layout_marginEnd="6dp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="22dp"
+                android:layout_marginTop="24dp"
                 android:text="Browse recipes"
                 android:textColor="@color/text_primary"
                 android:textSize="21sp"
@@ -227,114 +301,7 @@
                     </LinearLayout>
                 </LinearLayout>
             </HorizontalScrollView>
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="22dp"
-                android:layout_marginTop="24dp"
-                android:text="Search with what you have"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/red_hat_display" />
-
-            <LinearLayout
-                android:id="@+id/ingredientSearchSection"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="18dp"
-                android:layout_marginTop="24dp"
-                android:background="@drawable/bg_search_box"
-                android:elevation="2dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="5dp">
-
-                <EditText
-                    android:id="@+id/editIngredient"
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:hint="@string/hint_ingredient"
-                    android:imeOptions="actionDone"
-                    android:inputType="textCapSentences"
-                    android:paddingHorizontal="14dp"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_secondary" />
-
-                <ImageButton
-                    android:id="@+id/buttonAddIngredient"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:layout_margin="3dp"
-                    android:background="@drawable/bg_rounded_button"
-                    android:contentDescription="Add ingredient"
-                    android:padding="10dp"
-                    android:src="@drawable/ic_add"
-                    app:tint="@color/white" />
-            </LinearLayout>
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupIngredients"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="18dp"
-                android:layout_marginTop="6dp"
-                app:chipSpacingHorizontal="6dp"
-                app:chipSpacingVertical="2dp" />
-
-            <TextView
-                android:id="@+id/buttonFindRecipes"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_rounded_button"
-                android:gravity="center"
-                android:text="@string/find_recipes"
-                android:textColor="@color/white"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="22dp"
-                android:layout_marginTop="30dp"
-                android:text="The Latest &amp; Greatest"
-                android:textColor="@color/text_primary"
-                android:textSize="21sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/red_hat_display" />
-
-            <TextView
-                android:id="@+id/textEmptyState"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="22dp"
-                android:layout_marginTop="8dp"
-                android:gravity="start"
-                android:text="Add ingredients to discover recipes, or tap a photo above to explore."
-                android:textColor="@color/text_secondary"
-                android:visibility="visible"
-                tools:text="@string/no_recipes_found" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerRecipes"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:nestedScrollingEnabled="false"
-                android:paddingTop="6dp"
-                android:paddingBottom="12dp" />
-
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNav"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@color/surface"
-        app:menu="@menu/bottom_nav_menu" />
 </LinearLayout>

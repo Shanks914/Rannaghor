@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/background" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="24dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingHorizontal="16dp" android:paddingTop="14dp">
+            <ImageButton android:id="@+id/buttonRecipesBack" android:layout_width="40dp" android:layout_height="40dp" android:background="@android:color/transparent" android:src="@drawable/ic_back" android:contentDescription="Back" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:text="RANNAGHOR" android:textColor="@color/primary" android:textSize="13sp" android:textStyle="bold" android:letterSpacing="0.12" />
+        </LinearLayout>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="10dp" android:text="Recipes" android:textColor="@color/text_primary" android:textSize="32sp" android:textStyle="bold" android:fontFamily="@font/red_hat_display" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="5dp" android:text="Search by dish or by what’s in your kitchen." android:textColor="@color/text_secondary" android:textSize="14sp" />
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="20dp" android:layout_marginTop="18dp" android:orientation="horizontal">
+            <TextView android:id="@+id/buttonModeRecipeName" style="@style/RecipeModeButton" android:text="Recipe name" />
+            <TextView android:id="@+id/buttonModeIngredients" style="@style/RecipeModeButton" android:layout_marginStart="8dp" android:text="Ingredients" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/layoutRecipeNameSearch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="20dp" android:layout_marginTop="10dp" android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/bg_search_box" android:padding="5dp">
+            <EditText android:id="@+id/editRecipeKeyword" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="@android:color/transparent" android:hint="Search recipes by name" android:imeOptions="actionSearch" android:inputType="textCapSentences" android:paddingHorizontal="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/layoutIngredientSearch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="20dp" android:layout_marginTop="10dp" android:orientation="vertical" android:visibility="gone">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/bg_search_box" android:padding="5dp">
+                <EditText android:id="@+id/editRecipeIngredient" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="@android:color/transparent" android:hint="Add an ingredient" android:imeOptions="actionDone" android:inputType="textCapSentences" android:paddingHorizontal="12dp" android:textColor="@color/text_primary" android:textColorHint="@color/text_secondary" />
+                <ImageButton android:id="@+id/buttonAddRecipeIngredient" android:layout_width="44dp" android:layout_height="44dp" android:background="@drawable/bg_rounded_button" android:padding="10dp" android:src="@drawable/ic_add" android:contentDescription="Add ingredient" app:tint="@color/white" />
+            </LinearLayout>
+            <com.google.android.material.chip.ChipGroup android:id="@+id/chipRecipeIngredients" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" app:chipSpacingHorizontal="6dp" app:chipSpacingVertical="2dp" />
+        </LinearLayout>
+        <TextView android:id="@+id/buttonSearchRecipes" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginHorizontal="20dp" android:layout_marginTop="10dp" android:background="@drawable/bg_rounded_button" android:gravity="center" android:text="Search recipes" android:textColor="@color/white" android:textStyle="bold" />
+        <TextView android:id="@+id/textRecipeSearchStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="10dp" android:visibility="gone" android:textColor="@color/text_secondary" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="28dp" android:text="Most Loved Recipes" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:fontFamily="@font/red_hat_display" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="4dp" android:text="Community favorites, ranked by their average rating." android:textColor="@color/text_secondary" android:textSize="13sp" />
+        <TextView android:id="@+id/textMostLovedEmpty" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="12dp" android:text="No community ratings yet. Be the first to review a recipe." android:textColor="@color/text_secondary" android:visibility="gone" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/recyclerMostLoved" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:clipToPadding="false" android:nestedScrollingEnabled="false" android:paddingStart="20dp" android:paddingEnd="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginHorizontal="24dp" android:layout_marginTop="28dp" android:text="Search Results" android:textColor="@color/text_primary" android:textSize="21sp" android:textStyle="bold" android:fontFamily="@font/red_hat_display" />
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/recyclerRecipeSearchResults" android:layout_width="match_parent" android:layout_height="wrap_content" android:nestedScrollingEnabled="false" android:paddingTop="8dp" android:paddingBottom="12dp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

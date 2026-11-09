@@ -9,12 +9,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 import com.bumptech.glide.Glide;
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.RecipeRepository;
+import com.sadat.rannaghor.data.repository.RecipeReviewRepository;
+import com.sadat.rannaghor.data.repository.CloudBackupManager;
 import com.sadat.rannaghor.model.Ingredient;
 import com.sadat.rannaghor.model.Recipe;
+import com.sadat.rannaghor.model.RecipeReview;
+import com.sadat.rannaghor.ui.auth.AuthActivity;
 import com.sadat.rannaghor.ui.cooking.CookingActivity;
 
 import java.util.List;
@@ -26,6 +34,11 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private RecipeRepository repository;
     private Recipe currentRecipe;
     private ImageButton favoriteButton;
+    private RecipeReviewRepository reviewRepository;
+    private RecipeReviewAdapter reviewAdapter;
+    private int selectedRating;
+    private int pendingRating;
+    private static final int REQUEST_REVIEW_AUTH = 410;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,10 +46,15 @@ public class RecipeDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_recipe_detail);
 
         repository = new RecipeRepository(this);
+        reviewRepository = new RecipeReviewRepository(this);
         String recipeId = getIntent().getStringExtra(EXTRA_RECIPE_ID);
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
         favoriteButton = findViewById(R.id.buttonFavorite);
+        RecyclerView reviews = findViewById(R.id.recyclerRecipeReviews);
+        reviews.setLayoutManager(new LinearLayoutManager(this));
+        reviewAdapter = new RecipeReviewAdapter();
+        reviews.setAdapter(reviewAdapter);
 
         if (recipeId == null) {
             Toast.makeText(this, "No recipe selected", Toast.LENGTH_SHORT).show();
@@ -73,6 +91,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 ? R.drawable.ic_heart_filled
                 : R.drawable.ic_heart_outline);
         favoriteButton.setOnClickListener(v -> toggleFavorite());
+        loadReviews();
 
         LinearLayout ingredientList = findViewById(R.id.layoutIngredients);
         ingredientList.removeAllViews();
@@ -91,6 +110,78 @@ public class RecipeDetailActivity extends AppCompatActivity {
             intent.putExtra("extra_instructions", recipe.instructions);
             startActivity(intent);
         });
+        int[] stars = {R.id.ratingStar1, R.id.ratingStar2, R.id.ratingStar3, R.id.ratingStar4, R.id.ratingStar5};
+        for (int i = 0; i < stars.length; i++) {
+            final int rating = i + 1;
+            findViewById(stars[i]).setOnClickListener(v -> {
+                if (!isSignedIn()) { pendingRating = rating; openAuth(); return; }
+                selectedRating = rating;
+                renderStars();
+            });
+        }
+        findViewById(R.id.buttonSubmitReview).setOnClickListener(v -> submitReview());
+    }
+
+    private void loadReviews() {
+        if (currentRecipe == null) return;
+        reviewRepository.getReviews(currentRecipe.id, new RecipeReviewRepository.ReviewsCallback() {
+            @Override public void onLoaded(List<RecipeReview> reviews, double average) {
+                String summary = reviews.isEmpty() ? "No ratings yet. Be the first to rate this recipe."
+                        : String.format(java.util.Locale.getDefault(), "★ %.1f out of 5 · %d %s", average, reviews.size(), reviews.size() == 1 ? "rating" : "ratings");
+                ((TextView) findViewById(R.id.textRatingSummary)).setText(summary);
+                reviewAdapter.submitList(reviews);
+                if (CloudBackupManager.isConfigured(RecipeDetailActivity.this) && FirebaseAuth.getInstance().getCurrentUser() != null) {
+                    String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                    for (RecipeReview review : reviews) if (uid.equals(review.userId)) selectedRating = review.rating;
+                    renderStars();
+                }
+            }
+            @Override public void onError(Exception error) {
+                ((TextView) findViewById(R.id.textRatingSummary)).setText("Could not load ratings right now.");
+            }
+        });
+    }
+
+    private void renderStars() {
+        int[] ids = {R.id.ratingStar1, R.id.ratingStar2, R.id.ratingStar3, R.id.ratingStar4, R.id.ratingStar5};
+        for (int i = 0; i < ids.length; i++) ((TextView) findViewById(ids[i])).setText(i < selectedRating ? "★" : "☆");
+    }
+
+    private void submitReview() {
+        if (!isSignedIn()) { openAuth(); return; }
+        if (selectedRating < 1 || selectedRating > 5) {
+            Toast.makeText(this, "Tap 1 to 5 stars first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        TextView submit = findViewById(R.id.buttonSubmitReview);
+        submit.setEnabled(false);
+        String reviewText = ((android.widget.EditText) findViewById(R.id.editRecipeReview)).getText().toString();
+        reviewRepository.saveReview(currentRecipe.id, currentRecipe.name, currentRecipe.imageUrl, selectedRating, reviewText, error -> {
+            submit.setEnabled(true);
+            if (error != null) Toast.makeText(this, "Could not save review: " + error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            else {
+                Toast.makeText(this, "Your rating was saved", Toast.LENGTH_SHORT).show();
+                loadReviews();
+            }
+        });
+    }
+
+    private boolean isSignedIn() {
+        return CloudBackupManager.isConfigured(this) && FirebaseAuth.getInstance().getCurrentUser() != null;
+    }
+
+    private void openAuth() {
+        startActivityForResult(new Intent(this, AuthActivity.class), REQUEST_REVIEW_AUTH);
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_REVIEW_AUTH && resultCode == RESULT_OK) {
+            if (pendingRating > 0) selectedRating = pendingRating;
+            pendingRating = 0;
+            renderStars();
+            loadReviews();
+        }
     }
 
     private void toggleFavorite() {
