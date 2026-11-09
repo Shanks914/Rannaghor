@@ -2,6 +2,7 @@ package com.sadat.rannaghor.ui.home;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -19,9 +20,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.firebase.auth.FirebaseAuth;
 
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.RecipeRepository;
+import com.sadat.rannaghor.data.repository.CloudBackupManager;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.ui.detail.RecipeDetailActivity;
 import com.sadat.rannaghor.ui.favorites.FavoritesActivity;
@@ -44,6 +47,12 @@ public class HomeActivity extends AppCompatActivity {
     private TextView emptyStateText;
     private RecipeAdapter adapter;
     private RecipeRepository repository;
+    private FirebaseAuth auth;
+    private boolean firebaseConfigured;
+    private View accountPanel;
+    private TextView accountButton, signupBanner;
+    private EditText emailInput, passwordInput;
+    private TextView loginButton, createAccountButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +60,11 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         repository = new RecipeRepository(this);
+        firebaseConfigured = CloudBackupManager.isConfigured(this);
+        if (firebaseConfigured) {
+            auth = FirebaseAuth.getInstance();
+            if (auth.getCurrentUser() != null) syncSignedInUser();
+        }
         ReminderScheduler.scheduleDailyReminder(this);
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 100);
@@ -59,6 +73,13 @@ public class HomeActivity extends AppCompatActivity {
         chipGroup = findViewById(R.id.chipGroupIngredients);
         ingredientInput = findViewById(R.id.editIngredient);
         emptyStateText = findViewById(R.id.textEmptyState);
+        accountPanel = findViewById(R.id.accountPanel);
+        accountButton = findViewById(R.id.buttonAccount);
+        signupBanner = findViewById(R.id.textSignupBanner);
+        emailInput = findViewById(R.id.editEmail);
+        passwordInput = findViewById(R.id.editPassword);
+        loginButton = findViewById(R.id.buttonLogin);
+        createAccountButton = findViewById(R.id.buttonCreateAccount);
         ImageButton addButton = findViewById(R.id.buttonAddIngredient);
         TextView searchButton = findViewById(R.id.buttonFindRecipes);
 
@@ -69,8 +90,100 @@ public class HomeActivity extends AppCompatActivity {
 
         addButton.setOnClickListener(v -> addIngredientChip());
         searchButton.setOnClickListener(v -> searchRecipes());
+        accountButton.setOnClickListener(v -> toggleAccountPanel());
+        signupBanner.setOnClickListener(v -> toggleAccountPanel());
+        loginButton.setOnClickListener(v -> authenticate(false));
+        createAccountButton.setOnClickListener(v -> authenticate(true));
+
+        findViewById(R.id.cardPlannerShortcut).setOnClickListener(v ->
+                startActivity(new Intent(this, PlannerActivity.class)));
+        findViewById(R.id.cardFavoritesShortcut).setOnClickListener(v ->
+                startActivity(new Intent(this, FavoritesActivity.class)));
+        findViewById(R.id.cardShoppingShortcut).setOnClickListener(v ->
+                startActivity(new Intent(this, ShoppingListActivity.class)));
+        findViewById(R.id.ingredientSearchSection).setOnClickListener(v -> ingredientInput.requestFocus());
+
+        updateAccountSummary();
 
         setupBottomNav();
+    }
+
+    private void toggleAccountPanel() {
+        if (auth != null && auth.getCurrentUser() != null) {
+            Toast.makeText(this, "Signed in as " + auth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        accountPanel.setVisibility(accountPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+    }
+
+    private void authenticate(boolean createAccount) {
+        if (!firebaseConfigured || auth == null) {
+            Toast.makeText(this, R.string.firebase_setup_needed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String email = emailInput.getText().toString().trim();
+        String password = passwordInput.getText().toString();
+        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailInput.setError("Enter a valid email address");
+            return;
+        }
+        if (password.length() < 6) {
+            passwordInput.setError("Use at least 6 characters");
+            return;
+        }
+        setAuthButtonsEnabled(false);
+        if (createAccount) {
+            auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, task -> {
+                setAuthButtonsEnabled(true);
+                if (task.isSuccessful() && task.getResult().getUser() != null) syncSignedInUser();
+                else showAuthError(R.string.firebase_signup_failed, task.getException());
+            });
+        } else {
+            auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, task -> {
+                setAuthButtonsEnabled(true);
+                if (task.isSuccessful() && task.getResult().getUser() != null) syncSignedInUser();
+                else showAuthError(R.string.firebase_login_failed, task.getException());
+            });
+        }
+    }
+
+    private void syncSignedInUser() {
+        CloudBackupManager.restoreAndBackup(this, error -> {
+            if (isFinishing()) return;
+            updateAccountSummary();
+            if (error != null) {
+                String reason = error.getLocalizedMessage() == null
+                        ? "Check your internet connection and Firestore rules."
+                        : error.getLocalizedMessage();
+                Toast.makeText(this, getString(R.string.cloud_sync_failed, reason), Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, R.string.cloud_sync_succeeded, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateAccountSummary() {
+        boolean signedIn = auth != null && auth.getCurrentUser() != null;
+        accountButton.setText(signedIn ? "Signed in" : "Sign in");
+        if (signedIn) {
+            String email = auth.getCurrentUser().getEmail();
+            signupBanner.setText("Welcome back" + (email == null ? "" : ", " + email) + "  ·  Your recipes are backed up");
+            accountPanel.setVisibility(View.GONE);
+        }
+    }
+
+    private void setAuthButtonsEnabled(boolean enabled) {
+        loginButton.setEnabled(enabled);
+        createAccountButton.setEnabled(enabled);
+        loginButton.setAlpha(enabled ? 1f : 0.5f);
+        createAccountButton.setAlpha(enabled ? 1f : 0.5f);
+    }
+
+    private void showAuthError(int messageId, Exception error) {
+        String details = error == null || error.getLocalizedMessage() == null
+                ? "Please check your details and try again."
+                : error.getLocalizedMessage();
+        Toast.makeText(this, getString(messageId, details), Toast.LENGTH_LONG).show();
     }
 
     private void addIngredientChip() {
