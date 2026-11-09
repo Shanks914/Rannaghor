@@ -9,9 +9,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.widget.NestedScrollView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.annotation.Nullable;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -19,10 +21,12 @@ import android.content.pm.PackageManager;
 import com.google.firebase.auth.FirebaseAuth;
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.CloudBackupManager;
+import com.sadat.rannaghor.data.repository.RecipeReviewRepository;
 import com.sadat.rannaghor.model.RecipeCategory;
 import com.sadat.rannaghor.ui.category.RecipeCategoryActivity;
 import com.sadat.rannaghor.ui.favorites.FavoritesActivity;
 import com.sadat.rannaghor.ui.planner.PlannerActivity;
+import com.sadat.rannaghor.ui.auth.AuthActivity;
 import com.sadat.rannaghor.ui.recipes.RecipesActivity;
 import com.sadat.rannaghor.ui.shopping.ShoppingListActivity;
 import com.sadat.rannaghor.util.ReminderScheduler;
@@ -32,8 +36,9 @@ public class HomeActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private boolean firebaseConfigured;
     private View accountPanel;
-    private TextView accountButton, signupBanner, loginButton, createAccountButton;
+    private TextView accountButton, loginButton, createAccountButton;
     private EditText emailInput, passwordInput;
+    private static final int REQUEST_ACCOUNT_AUTH = 411;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,19 +56,16 @@ public class HomeActivity extends AppCompatActivity {
 
         accountPanel = findViewById(R.id.accountPanel);
         accountButton = findViewById(R.id.buttonAccount);
-        signupBanner = findViewById(R.id.textSignupBanner);
         emailInput = findViewById(R.id.editEmail);
         passwordInput = findViewById(R.id.editPassword);
         loginButton = findViewById(R.id.buttonLogin);
         createAccountButton = findViewById(R.id.buttonCreateAccount);
 
         accountButton.setOnClickListener(v -> toggleAccountPanel());
-        signupBanner.setOnClickListener(v -> toggleAccountPanel());
         loginButton.setOnClickListener(v -> authenticate(false));
         createAccountButton.setOnClickListener(v -> authenticate(true));
 
         findViewById(R.id.actionRecipes).setOnClickListener(v -> startActivity(new Intent(this, RecipesActivity.class)));
-        findViewById(R.id.actionHome).setOnClickListener(v -> ((NestedScrollView) findViewById(R.id.homeScrollView)).smoothScrollTo(0, 0));
         findViewById(R.id.actionPlanner).setOnClickListener(v -> startActivity(new Intent(this, PlannerActivity.class)));
         findViewById(R.id.actionShopping).setOnClickListener(v -> startActivity(new Intent(this, ShoppingListActivity.class)));
         findViewById(R.id.actionFavorites).setOnClickListener(v -> startActivity(new Intent(this, FavoritesActivity.class)));
@@ -88,10 +90,50 @@ public class HomeActivity extends AppCompatActivity {
 
     private void toggleAccountPanel() {
         if (auth != null && auth.getCurrentUser() != null) {
-            Toast.makeText(this, "Signed in as " + auth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+            showAccountDialog();
             return;
         }
         accountPanel.setVisibility(accountPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+    }
+
+    private void showAccountDialog() {
+        if (auth == null || auth.getCurrentUser() == null) return;
+        String userId = auth.getCurrentUser().getUid();
+        View content = getLayoutInflater().inflate(R.layout.dialog_account, null, false);
+        TextView email = content.findViewById(R.id.textAccountEmail);
+        TextView ratingCount = content.findViewById(R.id.textAccountRatingCount);
+        TextView reviewCount = content.findViewById(R.id.textAccountReviewCount);
+        TextView countError = content.findViewById(R.id.textAccountCountError);
+        email.setText(auth.getCurrentUser().getEmail() == null ? "Signed-in account" : auth.getCurrentUser().getEmail());
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(content)
+                .create();
+        content.findViewById(R.id.buttonSwitchAccount).setOnClickListener(v -> {
+            dialog.dismiss();
+            startActivityForResult(new Intent(this, AuthActivity.class), REQUEST_ACCOUNT_AUTH);
+        });
+        content.findViewById(R.id.buttonAccountLogout).setOnClickListener(v -> {
+            dialog.dismiss();
+            auth.signOut();
+            updateAccountSummary();
+            Toast.makeText(this, "You are signed out", Toast.LENGTH_SHORT).show();
+        });
+        new RecipeReviewRepository(this).getUserReviewCounts(userId, new RecipeReviewRepository.UserReviewCountsCallback() {
+            @Override public void onLoaded(int ratings, int writtenReviews) {
+                if (dialog.isShowing()) {
+                    ratingCount.setText(String.valueOf(ratings));
+                    reviewCount.setText(String.valueOf(writtenReviews));
+                }
+            }
+            @Override public void onError(Exception error) {
+                if (dialog.isShowing()) {
+                    ratingCount.setText("—");
+                    reviewCount.setText("—");
+                    countError.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        dialog.show();
     }
 
     private void authenticate(boolean createAccount) {
@@ -138,11 +180,23 @@ public class HomeActivity extends AppCompatActivity {
 
     private void updateAccountSummary() {
         boolean signedIn = auth != null && auth.getCurrentUser() != null;
-        accountButton.setText(signedIn ? "Signed in" : "Sign in");
+        String email = signedIn ? auth.getCurrentUser().getEmail() : null;
+        accountButton.setText(signedIn ? (email == null ? "My account" : email) : "Sign in");
+        accountButton.setContentDescription(signedIn ? "Account for " + (email == null ? "signed-in user" : email) : "Sign in");
         if (signedIn) {
-            String email = auth.getCurrentUser().getEmail();
-            signupBanner.setText("Welcome back" + (email == null ? "" : ", " + email) + "  ·  Your recipes are backed up");
             accountPanel.setVisibility(View.GONE);
+        }
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (accountButton != null) updateAccountSummary();
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_ACCOUNT_AUTH) {
+            updateAccountSummary();
         }
     }
 

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_rounded_card"
+    android:orientation="vertical"
+    android:padding="22dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your account"
+        android:textColor="@color/text_primary"
+        android:textSize="23sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/red_hat_display" />
+    <TextView
+        android:id="@+id/textAccountEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="88dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_search_box"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView android:id="@+id/textAccountRatingCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="…" android:textColor="@color/primary" android:textSize="26sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ratings" android:textColor="@color/text_secondary" android:textSize="13sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="88dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_search_box"
+            android:gravity="center"
+            android:orientation="vertical">
+            <TextView android:id="@+id/textAccountReviewCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="…" android:textColor="@color/primary" android:textSize="26sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Written reviews" android:textColor="@color/text_secondary" android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textAccountCountError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Publish the updated firestore.rules to load your community counts."
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/buttonSwitchAccount"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_rounded_button"
+        android:gravity="center"
+        android:text="Log in to another account"
+        android:textColor="@color/white"
+        android:textStyle="bold" />
+    <TextView
+        android:id="@+id/buttonAccountLogout"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_rounded_card"
+        android:gravity="center"
+        android:text="Log out"
+        android:textColor="@color/primary"
+        android:textStyle="bold" />
+</LinearLayout>

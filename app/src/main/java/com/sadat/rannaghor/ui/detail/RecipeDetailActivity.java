@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 
 import com.bumptech.glide.Glide;
 import com.sadat.rannaghor.R;
@@ -137,7 +138,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 }
             }
             @Override public void onError(Exception error) {
-                ((TextView) findViewById(R.id.textRatingSummary)).setText("Could not load ratings right now.");
+                ((TextView) findViewById(R.id.textRatingSummary)).setText(reviewErrorMessage(error));
             }
         });
     }
@@ -158,12 +159,21 @@ public class RecipeDetailActivity extends AppCompatActivity {
         String reviewText = ((android.widget.EditText) findViewById(R.id.editRecipeReview)).getText().toString();
         reviewRepository.saveReview(currentRecipe.id, currentRecipe.name, currentRecipe.imageUrl, selectedRating, reviewText, error -> {
             submit.setEnabled(true);
-            if (error != null) Toast.makeText(this, "Could not save review: " + error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            if (error != null) Toast.makeText(this, reviewErrorMessage(error), Toast.LENGTH_LONG).show();
             else {
                 Toast.makeText(this, "Your rating was saved", Toast.LENGTH_SHORT).show();
                 loadReviews();
             }
         });
+    }
+
+    private String reviewErrorMessage(Exception error) {
+        if (error instanceof FirebaseFirestoreException
+                && ((FirebaseFirestoreException) error).getCode() == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+            return "Firebase denied review access. Publish the updated firestore.rules in Firebase Console → Firestore Database → Rules.";
+        }
+        String detail = error == null ? null : error.getLocalizedMessage();
+        return detail == null || detail.trim().isEmpty() ? "Could not access recipe ratings. Check your connection and Firestore setup." : "Could not access recipe ratings: " + detail;
     }
 
     private boolean isSignedIn() {

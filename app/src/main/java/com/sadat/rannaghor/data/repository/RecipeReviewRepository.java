@@ -32,6 +32,10 @@ public class RecipeReviewRepository {
         void onLoaded(List<RatedRecipe> recipes);
         void onError(Exception error);
     }
+    public interface UserReviewCountsCallback {
+        void onLoaded(int ratings, int writtenReviews);
+        void onError(Exception error);
+    }
 
     @Nullable private final FirebaseFirestore firestore;
 
@@ -101,6 +105,21 @@ public class RecipeReviewRepository {
             if (popular.size() > 12) popular = new ArrayList<>(popular.subList(0, 12));
             callback.onLoaded(popular);
         }).addOnFailureListener(callback::onError);
+    }
+
+    /** Counts this account's ratings and the subset that include written text. */
+    public void getUserReviewCounts(String userId, UserReviewCountsCallback callback) {
+        if (firestore == null) { callback.onLoaded(0, 0); return; }
+        firestore.collection("recipeReviews").whereEqualTo("uid", userId).get()
+                .addOnSuccessListener(snapshot -> {
+                    int written = 0;
+                    for (DocumentSnapshot document : snapshot.getDocuments()) {
+                        String text = document.getString("review");
+                        if (text != null && !text.trim().isEmpty()) written++;
+                    }
+                    callback.onLoaded(snapshot.size(), written);
+                })
+                .addOnFailureListener(callback::onError);
     }
 
     private List<RecipeReview> parseReviews(List<DocumentSnapshot> documents) {
