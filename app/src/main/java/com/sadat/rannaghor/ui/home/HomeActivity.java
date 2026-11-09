@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -95,12 +96,14 @@ public class HomeActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> authenticate(false));
         createAccountButton.setOnClickListener(v -> authenticate(true));
 
-        findViewById(R.id.cardPlannerShortcut).setOnClickListener(v ->
-                startActivity(new Intent(this, PlannerActivity.class)));
-        findViewById(R.id.cardFavoritesShortcut).setOnClickListener(v ->
-                startActivity(new Intent(this, FavoritesActivity.class)));
-        findViewById(R.id.cardShoppingShortcut).setOnClickListener(v ->
-                startActivity(new Intent(this, ShoppingListActivity.class)));
+        findViewById(R.id.cardQuickEasy).setOnClickListener(v -> searchFromFeatured("Pasta"));
+        findViewById(R.id.cardDinner).setOnClickListener(v -> searchFromFeatured("Chicken"));
+        findViewById(R.id.cardVegetarian).setOnClickListener(v -> searchFromFeatured("Potato"));
+        findViewById(R.id.cardBangladeshi).setOnClickListener(v -> searchFromFeatured("Rice"));
+        findViewById(R.id.categoryQuick).setOnClickListener(v -> searchFromFeatured("Pasta"));
+        findViewById(R.id.categoryDinner).setOnClickListener(v -> searchFromFeatured("Chicken"));
+        findViewById(R.id.categoryVegetarian).setOnClickListener(v -> searchFromFeatured("Potato"));
+        findViewById(R.id.categoryBangladeshi).setOnClickListener(v -> searchFromFeatured("Rice"));
         findViewById(R.id.ingredientSearchSection).setOnClickListener(v -> ingredientInput.requestFocus());
 
         updateAccountSummary();
@@ -189,6 +192,10 @@ public class HomeActivity extends AppCompatActivity {
     private void addIngredientChip() {
         String text = ingredientInput.getText().toString().trim();
         if (text.isEmpty()) return;
+        addIngredientChip(text);
+    }
+
+    private void addIngredientChip(String text) {
         for (String ingredient : ingredients) {
             if (ingredient.equalsIgnoreCase(text)) {
                 Toast.makeText(this, "Ingredient already added", Toast.LENGTH_SHORT).show();
@@ -206,6 +213,15 @@ public class HomeActivity extends AppCompatActivity {
         });
         chipGroup.addView(chip);
         ingredientInput.setText("");
+    }
+
+    private void searchFromFeatured(String ingredient) {
+        ingredients.clear();
+        chipGroup.removeAllViews();
+        addIngredientChip(ingredient);
+        searchRecipes();
+        NestedScrollView scrollView = findViewById(R.id.homeScrollView);
+        scrollView.post(() -> scrollView.smoothScrollTo(0, findViewById(R.id.buttonFindRecipes).getBottom()));
     }
 
     private void searchRecipes() {

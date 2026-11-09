@@ -4,6 +4,7 @@
          widget defaults light too, so a device's dark-mode setting cannot
          make EditText hints and other default-styled text disappear. -->
     <style name="Theme.Rannaghor" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:fontFamily">@font/red_hat_text</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent</item>
@@ -16,5 +17,15 @@
         <item name="android:windowBackground">@color/background</item>
         <item name="android:statusBarColor">@color/primary_dark</item>
         <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="HomeCategoryChip">
+        <item name="android:background">@drawable/bg_account_pill</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingHorizontal">13dp</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/red_hat_text</item>
     </style>
 </resources>

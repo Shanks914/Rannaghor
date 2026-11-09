@@ -8,6 +8,7 @@
     android:background="@color/background">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/homeScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -29,7 +30,7 @@
                 android:minHeight="42dp"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="9dp"
-                android:text="Sign in to save your favorites and back up your recipes  ·  Join us"
+                android:text="Save your favorites in the cloud  ·  Sign in / Join"
                 android:textColor="@color/white"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -51,6 +52,7 @@
                     android:text="RANNAGHOR"
                     android:textColor="@color/primary"
                     android:textSize="19sp"
+                android:fontFamily="@font/red_hat_display"
                     android:textStyle="bold" />
 
                 <TextView
@@ -148,9 +150,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="22dp"
                 android:layout_marginTop="12dp"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/red_hat_display"
                 android:lineSpacingExtra="1dp"
-                android:text="Simple recipes for real, everyday cooking."
+                android:text="Make something delicious with what’s in your kitchen."
                 android:textColor="@color/text_primary"
                 android:textSize="30sp"
                 android:textStyle="bold" />
@@ -164,12 +166,131 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="15sp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="22dp"
+                android:layout_marginTop="24dp"
+                android:text="Browse something delicious"
+                android:textColor="@color/text_primary"
+                android:textSize="21sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/red_hat_display" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:scrollbars="none">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="18dp">
+                    <TextView android:id="@+id/categoryQuick" style="@style/HomeCategoryChip" android:layout_width="wrap_content" android:layout_height="34dp" android:layout_marginEnd="7dp" android:text="Quick &amp; Easy" />
+                    <TextView android:id="@+id/categoryDinner" style="@style/HomeCategoryChip" android:layout_width="wrap_content" android:layout_height="34dp" android:layout_marginEnd="7dp" android:text="Dinner" />
+                    <TextView android:id="@+id/categoryVegetarian" style="@style/HomeCategoryChip" android:layout_width="wrap_content" android:layout_height="34dp" android:layout_marginEnd="7dp" android:text="Vegetarian" />
+                    <TextView android:id="@+id/categoryBangladeshi" style="@style/HomeCategoryChip" android:layout_width="wrap_content" android:layout_height="34dp" android:layout_marginEnd="7dp" android:text="Bangladeshi" />
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="18dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardQuickEasy"
+                    android:layout_width="0dp"
+                    android:layout_height="128dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/divider"
+                    app:strokeWidth="1dp">
+                    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:src="@drawable/home_pasta" android:contentDescription="Creamy pasta" />
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:background="#B5000000" android:padding="8dp" android:text="Quick &amp; Easy" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold" />
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardDinner"
+                    android:layout_width="0dp"
+                    android:layout_height="128dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/divider"
+                    app:strokeWidth="1dp">
+                    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:src="@drawable/home_chicken" android:contentDescription="Roasted chicken dinner" />
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:background="#B5000000" android:padding="8dp" android:text="Dinner" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold" />
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="18dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardVegetarian"
+                    android:layout_width="0dp"
+                    android:layout_height="128dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="5dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/divider"
+                    app:strokeWidth="1dp">
+                    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:src="@drawable/home_salad" android:contentDescription="Fresh salad" />
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:background="#B5000000" android:padding="8dp" android:text="Vegetarian" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold" />
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardBangladeshi"
+                    android:layout_width="0dp"
+                    android:layout_height="128dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="5dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="1dp"
+                    app:strokeColor="@color/divider"
+                    app:strokeWidth="1dp">
+                    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                        <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:src="@drawable/home_khichuri" android:contentDescription="Bangladeshi khichuri" />
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom" android:background="#B5000000" android:padding="8dp" android:text="Bangladeshi" android:textColor="@color/white" android:textSize="14sp" android:textStyle="bold" />
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="22dp"
+                android:layout_marginTop="24dp"
+                android:text="Search with what you have"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/red_hat_display" />
+
             <LinearLayout
                 android:id="@+id/ingredientSearchSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="18dp"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="24dp"
                 android:background="@drawable/bg_search_box"
                 android:elevation="2dp"
                 android:gravity="center_vertical"
@@ -226,75 +347,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="22dp"
-                android:layout_marginTop="26dp"
-                android:text="A little help for your week"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:clipToPadding="false"
-                android:fillViewport="false"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="18dp">
-
-                    <TextView
-                        android:id="@+id/cardPlannerShortcut"
-                        android:layout_width="148dp"
-                        android:layout_height="104dp"
-                        android:layout_marginEnd="10dp"
-                        android:background="@drawable/bg_home_tile_peach"
-                        android:gravity="bottom"
-                        android:padding="14dp"
-                        android:text="📅  Plan your week"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/cardFavoritesShortcut"
-                        android:layout_width="148dp"
-                        android:layout_height="104dp"
-                        android:layout_marginEnd="10dp"
-                        android:background="@drawable/bg_home_tile_lavender"
-                        android:gravity="bottom"
-                        android:padding="14dp"
-                        android:text="♡  Your favorites"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/cardShoppingShortcut"
-                        android:layout_width="148dp"
-                        android:layout_height="104dp"
-                        android:background="@drawable/bg_home_tile_sage"
-                        android:gravity="bottom"
-                        android:padding="14dp"
-                        android:text="🛒  Shopping list"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="22dp"
                 android:layout_marginTop="30dp"
                 android:text="The Latest &amp; Greatest"
                 android:textColor="@color/text_primary"
                 android:textSize="21sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:fontFamily="@font/red_hat_display" />
 
             <TextView
                 android:id="@+id/textEmptyState"
@@ -303,7 +361,7 @@
                 android:layout_marginHorizontal="22dp"
                 android:layout_marginTop="8dp"
                 android:gravity="start"
-                android:text="Add a few ingredients above and your recipe matches will show up here."
+                android:text="Add ingredients to discover recipes, or tap a photo above to explore."
                 android:textColor="@color/text_secondary"
                 android:visibility="visible"
                 tools:text="@string/no_recipes_found" />
