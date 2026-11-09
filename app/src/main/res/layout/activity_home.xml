@@ -213,10 +213,6 @@
                         <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_vegan" android:contentDescription="Vegan recipes" />
                         <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="VEGAN" />
                     </LinearLayout>
-                    <LinearLayout android:id="@+id/categoryMealPrep" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_meal_prep" android:contentDescription="Meal prep recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="MEAL PREP" />
-                    </LinearLayout>
                     <LinearLayout android:id="@+id/categorySoups" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
                         <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_soups" android:contentDescription="Soup recipes" />
                         <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="SOUPS" />

@@ -103,7 +103,6 @@ public class HomeActivity extends AppCompatActivity {
         findViewById(R.id.categoryHealthy).setOnClickListener(v -> openCategory(RecipeCategory.HEALTHY));
         findViewById(R.id.categoryInstantPot).setOnClickListener(v -> openCategory(RecipeCategory.INSTANT_POT));
         findViewById(R.id.categoryVegan).setOnClickListener(v -> openCategory(RecipeCategory.VEGAN));
-        findViewById(R.id.categoryMealPrep).setOnClickListener(v -> openCategory(RecipeCategory.MEAL_PREP));
         findViewById(R.id.categorySoups).setOnClickListener(v -> openCategory(RecipeCategory.SOUPS));
         findViewById(R.id.categorySalads).setOnClickListener(v -> openCategory(RecipeCategory.SALADS));
         findViewById(R.id.categoryBangladeshi).setOnClickListener(v -> openCategory(RecipeCategory.BANGLADESHI));

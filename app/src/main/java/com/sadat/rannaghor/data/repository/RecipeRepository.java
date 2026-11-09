@@ -157,9 +157,6 @@ public class RecipeRepository {
         } else if (RecipeCategory.INSTANT_POT.equals(categoryId)) {
             requests.add(cb -> api.searchByName("instant pot", cb));
             requests.add(cb -> api.searchByName("pressure cooker", cb));
-        } else if (RecipeCategory.MEAL_PREP.equals(categoryId)) {
-            requests.add(cb -> api.searchByName("meal prep", cb));
-            requests.add(cb -> api.searchByName("casserole", cb));
         } else if (RecipeCategory.SOUPS.equals(categoryId)) {
             requests.add(cb -> api.searchByName("soup", cb));
         } else if (RecipeCategory.SALADS.equals(categoryId)) {
@@ -213,7 +210,7 @@ public class RecipeRepository {
             }
         }
         if (RecipeCategory.VEGETARIAN.equals(categoryId) || RecipeCategory.VEGAN.equals(categoryId) || RecipeCategory.HEALTHY.equals(categoryId)) return vegetarian;
-        if (RecipeCategory.QUICK_EASY.equals(categoryId) || RecipeCategory.MEAL_PREP.equals(categoryId)) return true;
+        if (RecipeCategory.QUICK_EASY.equals(categoryId)) return true;
         return false;
     }
 
