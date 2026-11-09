@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <font-family xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fontProviderAuthority="com.google.android.gms.fonts"
     android:fontProviderPackage="com.google.android.gms"
     android:fontProviderQuery="name=Red Hat Text&amp;weight=400"
     android:fontProviderCerts="@array/google_fonts_provider_certs"
-    android:fontProviderFetchStrategy="async"
-    android:fontProviderFetchTimeout="500" />
+    app:fontProviderFetchStrategy="async"
+    app:fontProviderFetchTimeout="500" />
