@@ -14,7 +14,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -27,6 +26,8 @@ import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.RecipeRepository;
 import com.sadat.rannaghor.data.repository.CloudBackupManager;
 import com.sadat.rannaghor.model.Recipe;
+import com.sadat.rannaghor.model.RecipeCategory;
+import com.sadat.rannaghor.ui.category.RecipeCategoryActivity;
 import com.sadat.rannaghor.ui.detail.RecipeDetailActivity;
 import com.sadat.rannaghor.ui.favorites.FavoritesActivity;
 import com.sadat.rannaghor.ui.planner.PlannerActivity;
@@ -96,14 +97,16 @@ public class HomeActivity extends AppCompatActivity {
         loginButton.setOnClickListener(v -> authenticate(false));
         createAccountButton.setOnClickListener(v -> authenticate(true));
 
-        findViewById(R.id.cardQuickEasy).setOnClickListener(v -> searchFromFeatured("Pasta"));
-        findViewById(R.id.cardDinner).setOnClickListener(v -> searchFromFeatured("Chicken"));
-        findViewById(R.id.cardVegetarian).setOnClickListener(v -> searchFromFeatured("Potato"));
-        findViewById(R.id.cardBangladeshi).setOnClickListener(v -> searchFromFeatured("Rice"));
-        findViewById(R.id.categoryQuick).setOnClickListener(v -> searchFromFeatured("Pasta"));
-        findViewById(R.id.categoryDinner).setOnClickListener(v -> searchFromFeatured("Chicken"));
-        findViewById(R.id.categoryVegetarian).setOnClickListener(v -> searchFromFeatured("Potato"));
-        findViewById(R.id.categoryBangladeshi).setOnClickListener(v -> searchFromFeatured("Rice"));
+        findViewById(R.id.categoryQuickEasy).setOnClickListener(v -> openCategory(RecipeCategory.QUICK_EASY));
+        findViewById(R.id.categoryDinner).setOnClickListener(v -> openCategory(RecipeCategory.DINNER));
+        findViewById(R.id.categoryVegetarian).setOnClickListener(v -> openCategory(RecipeCategory.VEGETARIAN));
+        findViewById(R.id.categoryHealthy).setOnClickListener(v -> openCategory(RecipeCategory.HEALTHY));
+        findViewById(R.id.categoryInstantPot).setOnClickListener(v -> openCategory(RecipeCategory.INSTANT_POT));
+        findViewById(R.id.categoryVegan).setOnClickListener(v -> openCategory(RecipeCategory.VEGAN));
+        findViewById(R.id.categoryMealPrep).setOnClickListener(v -> openCategory(RecipeCategory.MEAL_PREP));
+        findViewById(R.id.categorySoups).setOnClickListener(v -> openCategory(RecipeCategory.SOUPS));
+        findViewById(R.id.categorySalads).setOnClickListener(v -> openCategory(RecipeCategory.SALADS));
+        findViewById(R.id.categoryBangladeshi).setOnClickListener(v -> openCategory(RecipeCategory.BANGLADESHI));
         findViewById(R.id.ingredientSearchSection).setOnClickListener(v -> ingredientInput.requestFocus());
 
         updateAccountSummary();
@@ -215,13 +218,10 @@ public class HomeActivity extends AppCompatActivity {
         ingredientInput.setText("");
     }
 
-    private void searchFromFeatured(String ingredient) {
-        ingredients.clear();
-        chipGroup.removeAllViews();
-        addIngredientChip(ingredient);
-        searchRecipes();
-        NestedScrollView scrollView = findViewById(R.id.homeScrollView);
-        scrollView.post(() -> scrollView.smoothScrollTo(0, findViewById(R.id.buttonFindRecipes).getBottom()));
+    private void openCategory(String categoryId) {
+        Intent intent = new Intent(this, RecipeCategoryActivity.class);
+        intent.putExtra(RecipeCategoryActivity.EXTRA_CATEGORY, categoryId);
+        startActivity(intent);
     }
 
     private void searchRecipes() {

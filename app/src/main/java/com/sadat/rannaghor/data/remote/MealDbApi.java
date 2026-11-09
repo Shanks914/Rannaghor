@@ -55,6 +55,39 @@ public class MealDbApi {
         });
     }
 
+    /** Browse meals from a TheMealDB recipe category such as Vegan or Vegetarian. */
+    public void fetchByCategory(String category, ApiCallback callback) {
+        fetchFiltered(BASE_URL + "/filter.php?c=" + urlEncode(category), callback);
+    }
+
+    /** Browse meals by cuisine/area, including TheMealDB's Bangladeshi area. */
+    public void fetchByArea(String area, ApiCallback callback) {
+        fetchFiltered(BASE_URL + "/filter.php?a=" + urlEncode(area), callback);
+    }
+
+    /** Search meal titles and return full recipe details for each match. */
+    public void searchByName(String query, ApiCallback callback) {
+        String url = BASE_URL + "/search.php?s=" + urlEncode(query);
+        executor.execute(() -> {
+            try {
+                String json = httpGet(url);
+                postSuccess(callback, parseLookupResponse(json));
+            } catch (Exception e) {
+                postError(callback, "Could not reach the recipe service: " + e.getMessage());
+            }
+        });
+    }
+
+    private void fetchFiltered(String url, ApiCallback callback) {
+        executor.execute(() -> {
+            try {
+                postSuccess(callback, parseFilterResponse(httpGet(url)));
+            } catch (Exception e) {
+                postError(callback, "Could not reach the recipe service: " + e.getMessage());
+            }
+        });
+    }
+
     /** Fetch the full detail (ingredients + instructions) for one recipe id. */
     public void fetchRecipeDetail(String mealId, ApiCallback callback) {
         String url = BASE_URL + "/lookup.php?i=" + urlEncode(mealId);
@@ -93,8 +126,13 @@ public class MealDbApi {
         JSONObject root = new JSONObject(json);
         JSONArray meals = root.optJSONArray("meals");
         if (meals == null || meals.length() == 0) return list;
+        for (int i = 0; i < meals.length(); i++) {
+            list.add(parseFullMeal(meals.getJSONObject(i)));
+        }
+        return list;
+    }
 
-        JSONObject m = meals.getJSONObject(0);
+    private Recipe parseFullMeal(JSONObject m) throws Exception {
         Recipe r = new Recipe();
         r.id = m.optString("idMeal");
         r.name = m.optString("strMeal");
@@ -113,8 +151,7 @@ public class MealDbApi {
         }
         r.ingredientsRaw = Ingredient.toStorageString(ingredients);
 
-        list.add(r);
-        return list;
+        return r;
     }
 
     // ---- low level ---------------------------------------------------

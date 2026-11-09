@@ -9,6 +9,7 @@ import com.sadat.rannaghor.data.remote.ApiCallback;
 import com.sadat.rannaghor.data.remote.MealDbApi;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.model.Ingredient;
+import com.sadat.rannaghor.model.RecipeCategory;
 import com.sadat.rannaghor.util.LocalRecipeLoader;
 
 import java.util.ArrayList;
@@ -132,6 +133,90 @@ public class RecipeRepository {
         }
     }
 
+    /** Loads recipes for a home-screen collection, combining relevant API searches with local dishes. */
+    public void searchByCategory(String categoryId, SearchCallback callback) {
+        List<java.util.function.Consumer<ApiCallback>> requests = new ArrayList<>();
+        if (RecipeCategory.BANGLADESHI.equals(categoryId)) {
+            requests.add(cb -> api.fetchByArea("Bangladeshi", cb));
+        } else if (RecipeCategory.VEGETARIAN.equals(categoryId)) {
+            requests.add(cb -> api.fetchByCategory("Vegetarian", cb));
+        } else if (RecipeCategory.VEGAN.equals(categoryId)) {
+            requests.add(cb -> api.fetchByCategory("Vegan", cb));
+        } else if (RecipeCategory.HEALTHY.equals(categoryId)) {
+            requests.add(cb -> api.fetchByCategory("Vegan", cb));
+            requests.add(cb -> api.fetchByCategory("Vegetarian", cb));
+            requests.add(cb -> api.fetchByCategory("Seafood", cb));
+        } else if (RecipeCategory.DINNER.equals(categoryId)) {
+            for (String value : new String[]{"Chicken", "Beef", "Seafood", "Lamb", "Pasta", "Vegetarian", "Vegan"}) {
+                requests.add(cb -> api.fetchByCategory(value, cb));
+            }
+        } else if (RecipeCategory.QUICK_EASY.equals(categoryId)) {
+            for (String value : new String[]{"quick", "easy"}) requests.add(cb -> api.searchByName(value, cb));
+            requests.add(cb -> api.fetchByCategory("Pasta", cb));
+            requests.add(cb -> api.fetchByCategory("Breakfast", cb));
+        } else if (RecipeCategory.INSTANT_POT.equals(categoryId)) {
+            requests.add(cb -> api.searchByName("instant pot", cb));
+            requests.add(cb -> api.searchByName("pressure cooker", cb));
+        } else if (RecipeCategory.MEAL_PREP.equals(categoryId)) {
+            requests.add(cb -> api.searchByName("meal prep", cb));
+            requests.add(cb -> api.searchByName("casserole", cb));
+        } else if (RecipeCategory.SOUPS.equals(categoryId)) {
+            requests.add(cb -> api.searchByName("soup", cb));
+        } else if (RecipeCategory.SALADS.equals(categoryId)) {
+            requests.add(cb -> api.searchByName("salad", cb));
+        }
+
+        if (requests.isEmpty()) {
+            callback.onResult(new ArrayList<>());
+            return;
+        }
+
+        Map<String, Recipe> results = new java.util.LinkedHashMap<>();
+        AtomicInteger pending = new AtomicInteger(requests.size());
+        AtomicInteger succeeded = new AtomicInteger();
+        ApiCallback categoryRequest = new ApiCallback() {
+            @Override public void onSuccess(List<Recipe> recipes) {
+                succeeded.incrementAndGet();
+                synchronized (results) {
+                    for (Recipe recipe : recipes) results.put(recipe.id, recipe);
+                }
+                finishIfReady();
+            }
+            @Override public void onError(String message) { finishIfReady(); }
+            private void finishIfReady() {
+                if (pending.decrementAndGet() != 0) return;
+                dbExecutor.execute(() -> {
+                    for (Recipe local : LocalRecipeLoader.loadAll(appContext)) {
+                        if (matchesLocalCategory(local, categoryId)) results.put(local.id, local);
+                    }
+                    if (succeeded.get() == 0 && results.isEmpty()) {
+                        mainThread.post(() -> callback.onError("Could not reach the recipe service. Check your internet connection."));
+                    } else {
+                        List<Recipe> list = new ArrayList<>(results.values());
+                        list.sort((a, b) -> a.name.compareToIgnoreCase(b.name));
+                        mainThread.post(() -> callback.onResult(list));
+                    }
+                });
+            }
+        };
+        for (java.util.function.Consumer<ApiCallback> request : requests) request.accept(categoryRequest);
+    }
+
+    private boolean matchesLocalCategory(Recipe recipe, String categoryId) {
+        if (RecipeCategory.BANGLADESHI.equals(categoryId) || RecipeCategory.DINNER.equals(categoryId)) return true;
+        boolean vegetarian = true;
+        for (Ingredient ingredient : Ingredient.parseList(recipe.ingredientsRaw)) {
+            String name = ingredient.name.toLowerCase(java.util.Locale.ROOT).trim();
+            if (name.matches(".*\\b(chicken|fish|beef|pork|mutton|meat|prawn|shrimp|egg|eggs)\\b.*")) {
+                vegetarian = false;
+                break;
+            }
+        }
+        if (RecipeCategory.VEGETARIAN.equals(categoryId) || RecipeCategory.VEGAN.equals(categoryId) || RecipeCategory.HEALTHY.equals(categoryId)) return vegetarian;
+        if (RecipeCategory.QUICK_EASY.equals(categoryId) || RecipeCategory.MEAL_PREP.equals(categoryId)) return true;
+        return false;
+    }
+
     /** Loads full recipe detail: from Room if it's already saved, otherwise from the API. */
     public void getRecipeDetail(String recipeId, SingleRecipeCallback callback) {
         dbExecutor.execute(() -> {
@@ -139,6 +224,14 @@ public class RecipeRepository {
             if (local != null && local.instructions != null && !local.instructions.isEmpty()) {
                 mainThread.post(() -> callback.onResult(local));
                 return;
+            }
+            if (recipeId.startsWith("local_")) {
+                for (Recipe bundled : LocalRecipeLoader.loadAll(appContext)) {
+                    if (recipeId.equals(bundled.id)) {
+                        mainThread.post(() -> callback.onResult(bundled));
+                        return;
+                    }
+                }
             }
             api.fetchRecipeDetail(recipeId, new ApiCallback() {
                 @Override

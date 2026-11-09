@@ -19,13 +19,25 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <style name="HomeCategoryChip">
-        <item name="android:background">@drawable/bg_account_pill</item>
+    <style name="HomeCategoryItem">
+        <item name="android:orientation">vertical</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:paddingVertical">4dp</item>
+    </style>
+
+    <style name="HomeCategoryImage">
+        <item name="android:scaleType">centerCrop</item>
+        <item name="android:background">@drawable/bg_category_circle</item>
+        <item name="android:clipToOutline">true</item>
+    </style>
+
+    <style name="HomeCategoryLabel">
         <item name="android:gravity">center</item>
-        <item name="android:paddingHorizontal">13dp</item>
-        <item name="android:textColor">@color/primary</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:paddingHorizontal">3dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:fontFamily">@font/red_hat_text</item>
+        <item name="android:textAllCaps">true</item>
     </style>
 </resources>

@@ -26,6 +26,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.detail.RecipeDetailActivity" android:exported="false" />
+        <activity android:name=".ui.category.RecipeCategoryActivity" android:exported="false" />
         <activity android:name=".ui.favorites.FavoritesActivity" android:exported="false" />
         <activity android:name=".ui.planner.PlannerActivity" android:exported="false" />
         <activity android:name=".ui.shopping.ShoppingListActivity" android:exported="false" />
