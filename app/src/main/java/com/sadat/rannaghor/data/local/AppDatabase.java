@@ -33,11 +33,11 @@ public abstract class AppDatabase extends RoomDatabase {
         @Override public void migrate(SupportSQLiteDatabase db) {
             db.execSQL("ALTER TABLE meal_plan ADD COLUMN scheduledAtMillis INTEGER NOT NULL DEFAULT 0");
             db.execSQL("ALTER TABLE meal_plan ADD COLUMN durationMinutes INTEGER NOT NULL DEFAULT 30");
-            db.execSQL("ALTER TABLE meal_plan ADD COLUMN status TEXT NOT NULL DEFAULT 'PLANNED'");
-            db.execSQL("ALTER TABLE meal_plan ADD COLUMN customMealName TEXT NOT NULL DEFAULT ''");
-            db.execSQL("ALTER TABLE meal_plan ADD COLUMN imageUrl TEXT NOT NULL DEFAULT ''");
-            db.execSQL("ALTER TABLE meal_plan ADD COLUMN instructions TEXT NOT NULL DEFAULT ''");
-            db.execSQL("ALTER TABLE meal_plan ADD COLUMN ingredientsRaw TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN status TEXT DEFAULT 'PLANNED'");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN customMealName TEXT DEFAULT ''");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN imageUrl TEXT DEFAULT ''");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN instructions TEXT DEFAULT ''");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN ingredientsRaw TEXT DEFAULT ''");
         }
     };
 
