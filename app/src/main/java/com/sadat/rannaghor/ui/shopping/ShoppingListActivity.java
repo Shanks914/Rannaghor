@@ -6,7 +6,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +17,8 @@ import com.sadat.rannaghor.model.MealPlanEntry;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.model.ShoppingItem;
 import com.sadat.rannaghor.util.LocalRecipeLoader;
+import com.sadat.rannaghor.ui.auth.AccountRequiredActivity;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,16 +32,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** Shopping list with manual entry, sharing, and ingredient generation from this week's plan. */
-public class ShoppingListActivity extends AppCompatActivity {
+public class ShoppingListActivity extends AccountRequiredActivity {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private ShoppingAdapter adapter;
     private Calendar selectedWeekStart;
     private TextView selectedWeekLabel;
+    private AppDatabase accountDatabase;
+    private String accountUid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!requireSignedInAccount()) return;
+        accountUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        accountDatabase = AppDatabase.getInstanceForUser(getApplicationContext(), accountUid);
         setContentView(R.layout.activity_shopping_list);
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
@@ -67,7 +73,7 @@ public class ShoppingListActivity extends AppCompatActivity {
         findViewById(R.id.buttonShareList).setOnClickListener(v -> shareList());
         findViewById(R.id.buttonGenerateFromPlan).setOnClickListener(v -> generateFromSelectedWeek());
 
-        loadItems();
+        restoreAccountData(this::loadItems);
     }
 
     private void addItem(String name) {
@@ -76,8 +82,8 @@ public class ShoppingListActivity extends AppCompatActivity {
         item.quantity = "";
         item.isChecked = false;
         executor.execute(() -> {
-            AppDatabase.getInstance(this).shoppingDao().insert(item);
-            CloudBackupManager.backup(getApplicationContext());
+            accountDatabase.shoppingDao().insert(item);
+            CloudBackupManager.backupForUser(getApplicationContext(), accountUid);
             runOnUiThread(this::loadItems);
         });
     }
@@ -85,23 +91,22 @@ public class ShoppingListActivity extends AppCompatActivity {
     private void onToggleItem(ShoppingItem item, boolean checked) {
         item.isChecked = checked;
         executor.execute(() -> {
-            AppDatabase.getInstance(this).shoppingDao().update(item);
-            CloudBackupManager.backup(getApplicationContext());
+            accountDatabase.shoppingDao().update(item);
+            CloudBackupManager.backupForUser(getApplicationContext(), accountUid);
         });
     }
 
     private void loadItems() {
         executor.execute(() -> {
-            List<ShoppingItem> items = AppDatabase.getInstance(this).shoppingDao().getAll();
+            List<ShoppingItem> items = accountDatabase.shoppingDao().getAll();
             runOnUiThread(() -> adapter.submitList(items));
         });
     }
 
     private void generateFromSelectedWeek() {
         executor.execute(() -> {
-            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             String[] week = getSelectedWeekRange();
-            List<MealPlanEntry> plannedMeals = db.mealPlanDao().getForWeek(week[0], week[1]);
+            List<MealPlanEntry> plannedMeals = accountDatabase.mealPlanDao().getForWeek(week[0], week[1]);
             if (plannedMeals.isEmpty()) {
                 runOnUiThread(() -> Toast.makeText(this, R.string.no_meals_this_week, Toast.LENGTH_SHORT).show());
                 return;
@@ -113,7 +118,7 @@ public class ShoppingListActivity extends AppCompatActivity {
             }
 
             Map<String, ShoppingItem> mergedItems = new LinkedHashMap<>();
-            for (ShoppingItem item : db.shoppingDao().getAll()) {
+            for (ShoppingItem item : accountDatabase.shoppingDao().getAll()) {
                 mergedItems.put(normalize(item.name), item);
             }
 
@@ -121,7 +126,7 @@ public class ShoppingListActivity extends AppCompatActivity {
             Set<String> generatedIngredients = new HashSet<>();
             for (MealPlanEntry entry : plannedMeals) {
                 Recipe recipe = entry.recipeId == null || entry.recipeId.isEmpty()
-                        ? null : db.recipeDao().getById(entry.recipeId);
+                        ? null : accountDatabase.recipeDao().getById(entry.recipeId);
                 if (recipe == null || recipe.ingredientsRaw == null || recipe.ingredientsRaw.trim().isEmpty()) {
                     recipe = localRecipes.get(entry.recipeId);
                 }
@@ -152,13 +157,13 @@ public class ShoppingListActivity extends AppCompatActivity {
                 return;
             }
 
-            db.runInTransaction(() -> {
+            accountDatabase.runInTransaction(() -> {
                 for (ShoppingItem item : mergedItems.values()) {
-                    if (item.id == 0) db.shoppingDao().insert(item);
-                    else db.shoppingDao().update(item);
+                    if (item.id == 0) accountDatabase.shoppingDao().insert(item);
+                    else accountDatabase.shoppingDao().update(item);
                 }
             });
-            CloudBackupManager.backup(getApplicationContext());
+            CloudBackupManager.backupForUser(getApplicationContext(), accountUid);
             int ingredientCount = generatedIngredients.size();
             int mealCount = recipesProcessed;
             runOnUiThread(() -> {
@@ -228,7 +233,7 @@ public class ShoppingListActivity extends AppCompatActivity {
     /** Builds a plain-text list and hands it to any app the user picks (ACTION_SEND). */
     private void shareList() {
         executor.execute(() -> {
-            List<ShoppingItem> items = AppDatabase.getInstance(this).shoppingDao().getAll();
+            List<ShoppingItem> items = accountDatabase.shoppingDao().getAll();
             StringBuilder sb = new StringBuilder("Shopping list (Rannaghor):\n");
             for (ShoppingItem item : items) {
                 sb.append(item.isChecked ? "[x] " : "[ ] ").append(item.name);

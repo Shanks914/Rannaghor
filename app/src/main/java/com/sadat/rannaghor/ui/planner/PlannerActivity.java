@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -15,6 +14,8 @@ import com.sadat.rannaghor.data.repository.CloudBackupManager;
 import com.sadat.rannaghor.model.MealPlanEntry;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.util.LocalRecipeLoader;
+import com.sadat.rannaghor.ui.auth.AccountRequiredActivity;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** Daily meal planner with date navigation and a picker for saved and bundled recipes. */
-public class PlannerActivity extends AppCompatActivity {
+public class PlannerActivity extends AccountRequiredActivity {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     private final SimpleDateFormat displayDateFormat = new SimpleDateFormat("EEE, MMM d", Locale.getDefault());
@@ -36,10 +37,15 @@ public class PlannerActivity extends AppCompatActivity {
     private String selectedDate;
     private Calendar selectedDay;
     private TextView selectedDateLabel;
+    private AppDatabase accountDatabase;
+    private String accountUid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!requireSignedInAccount()) return;
+        accountUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        accountDatabase = AppDatabase.getInstanceForUser(getApplicationContext(), accountUid);
         setContentView(R.layout.activity_planner);
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
@@ -55,7 +61,7 @@ public class PlannerActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
 
         findViewById(R.id.buttonAddMeal).setOnClickListener(v -> showRecipePicker());
-        loadPlanForDate();
+        restoreAccountData(this::loadPlanForDate);
     }
 
     private void showRecipePicker() {
@@ -64,7 +70,7 @@ public class PlannerActivity extends AppCompatActivity {
             for (Recipe recipe : LocalRecipeLoader.loadAll(getApplicationContext())) {
                 recipesById.put(recipe.id, recipe);
             }
-            for (Recipe recipe : AppDatabase.getInstance(getApplicationContext()).recipeDao().getFavorites()) {
+            for (Recipe recipe : accountDatabase.recipeDao().getFavorites()) {
                 recipesById.put(recipe.id, recipe);
             }
             List<Recipe> recipes = new ArrayList<>(recipesById.values());
@@ -104,8 +110,8 @@ public class PlannerActivity extends AppCompatActivity {
         entry.recipeId = recipe.id;
 
         executor.execute(() -> {
-            AppDatabase.getInstance(getApplicationContext()).mealPlanDao().insert(entry);
-            CloudBackupManager.backup(getApplicationContext());
+            accountDatabase.mealPlanDao().insert(entry);
+            CloudBackupManager.backupForUser(getApplicationContext(), accountUid);
             runOnUiThread(this::loadPlanForDate);
         });
     }
@@ -114,8 +120,8 @@ public class PlannerActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setMessage("Remove " + entry.recipeName + " from the plan?")
                 .setPositiveButton("Remove", (d, w) -> executor.execute(() -> {
-                    AppDatabase.getInstance(getApplicationContext()).mealPlanDao().delete(entry);
-                    CloudBackupManager.backup(getApplicationContext());
+                    accountDatabase.mealPlanDao().delete(entry);
+                    CloudBackupManager.backupForUser(getApplicationContext(), accountUid);
                     runOnUiThread(this::loadPlanForDate);
                 }))
                 .setNegativeButton("Cancel", null)
@@ -125,8 +131,7 @@ public class PlannerActivity extends AppCompatActivity {
     private void loadPlanForDate() {
         String dateToLoad = selectedDate;
         executor.execute(() -> {
-            List<MealPlanEntry> entries = AppDatabase.getInstance(getApplicationContext())
-                    .mealPlanDao().getForDate(dateToLoad);
+            List<MealPlanEntry> entries = accountDatabase.mealPlanDao().getForDate(dateToLoad);
             runOnUiThread(() -> {
                 if (!isFinishing() && dateToLoad.equals(selectedDate)) adapter.submitList(entries);
             });

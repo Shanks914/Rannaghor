@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -12,15 +11,18 @@ import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.RecipeRepository;
 import com.sadat.rannaghor.ui.detail.RecipeDetailActivity;
 import com.sadat.rannaghor.ui.home.RecipeAdapter;
+import com.sadat.rannaghor.ui.auth.AccountRequiredActivity;
 
-public class FavoritesActivity extends AppCompatActivity {
+public class FavoritesActivity extends AccountRequiredActivity {
 
     private RecipeRepository repository;
     private RecipeAdapter adapter;
+    private boolean accountDataReady;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!requireSignedInAccount()) return;
         setContentView(R.layout.activity_favorites);
 
         repository = new RecipeRepository(this);
@@ -34,11 +36,21 @@ public class FavoritesActivity extends AppCompatActivity {
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
+        restoreAccountData(() -> {
+            accountDataReady = true;
+            loadFavorites();
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (!accountDataReady) return;
+        loadFavorites();
+    }
+
+    private void loadFavorites() {
+        if (adapter == null || repository == null) return;
         // Reload every time the screen becomes visible, in case a favourite
         // was added or removed on the detail screen.
         TextView emptyText = findViewById(R.id.textEmptyFavorites);

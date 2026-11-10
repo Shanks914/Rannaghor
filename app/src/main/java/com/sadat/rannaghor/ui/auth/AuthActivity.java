@@ -55,7 +55,6 @@ public class AuthActivity extends AppCompatActivity {
             Toast.makeText(this, error == null || error.getLocalizedMessage() == null ? "Could not sign in. Check your details." : error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             return;
         }
-        CloudBackupManager.restoreAndBackup(this, ignored -> { });
         setResult(Activity.RESULT_OK);
         finish();
     }

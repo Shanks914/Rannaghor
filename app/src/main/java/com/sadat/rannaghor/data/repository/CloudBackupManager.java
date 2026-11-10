@@ -57,9 +57,9 @@ public final class CloudBackupManager {
         }
 
         DocumentReference backup = backupDocument(user.getUid());
+        AppDatabase db = AppDatabase.getInstanceForUser(appContext, user.getUid());
         backup.get().addOnSuccessListener(snapshot -> DATABASE_EXECUTOR.execute(() -> {
             try {
-                AppDatabase db = AppDatabase.getInstance(appContext);
                 Map<String, Recipe> favorites = mergeFavorites(snapshot, db);
                 Map<String, MealPlanEntry> plans = mergeMealPlans(snapshot, db);
                 Map<String, ShoppingItem> shoppingItems = mergeShoppingItems(snapshot, db);
@@ -91,14 +91,21 @@ public final class CloudBackupManager {
         if (!isConfigured(appContext)) return;
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
+        backupForUser(appContext, user.getUid());
+    }
+
+    /** Writes a specific account snapshot; callers should capture the uid at the start of an edit. */
+    public static void backupForUser(Context context, String uid) {
+        Context appContext = context.getApplicationContext();
+        if (uid == null || uid.isEmpty() || !isConfigured(appContext)) return;
+        AppDatabase db = AppDatabase.getInstanceForUser(appContext, uid);
 
         DATABASE_EXECUTOR.execute(() -> {
             try {
-                AppDatabase db = AppDatabase.getInstance(appContext);
                 List<Recipe> favorites = db.recipeDao().getFavorites();
                 List<MealPlanEntry> plans = db.mealPlanDao().getAll();
                 List<ShoppingItem> items = db.shoppingDao().getAll();
-                backupDocument(user.getUid()).set(makeBackup(favorites, plans, items));
+                backupDocument(uid).set(makeBackup(favorites, plans, items));
             } catch (Exception ignored) {
                 // Local Room data remains available; a later update or sign-in retries the backup.
             }

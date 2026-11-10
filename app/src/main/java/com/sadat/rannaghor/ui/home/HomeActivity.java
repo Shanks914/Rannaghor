@@ -39,6 +39,8 @@ public class HomeActivity extends AppCompatActivity {
     private TextView accountButton, loginButton, createAccountButton;
     private EditText emailInput, passwordInput;
     private static final int REQUEST_ACCOUNT_AUTH = 411;
+    private static final int REQUEST_PRIVATE_FEATURE_AUTH = 412;
+    private Class<?> pendingDestination;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,9 +68,9 @@ public class HomeActivity extends AppCompatActivity {
         createAccountButton.setOnClickListener(v -> authenticate(true));
 
         findViewById(R.id.actionRecipes).setOnClickListener(v -> startActivity(new Intent(this, RecipesActivity.class)));
-        findViewById(R.id.actionPlanner).setOnClickListener(v -> startActivity(new Intent(this, PlannerActivity.class)));
-        findViewById(R.id.actionShopping).setOnClickListener(v -> startActivity(new Intent(this, ShoppingListActivity.class)));
-        findViewById(R.id.actionFavorites).setOnClickListener(v -> startActivity(new Intent(this, FavoritesActivity.class)));
+        findViewById(R.id.actionPlanner).setOnClickListener(v -> openPersonalDestination(PlannerActivity.class));
+        findViewById(R.id.actionShopping).setOnClickListener(v -> openPersonalDestination(ShoppingListActivity.class));
+        findViewById(R.id.actionFavorites).setOnClickListener(v -> openPersonalDestination(FavoritesActivity.class));
 
         findViewById(R.id.categoryQuickEasy).setOnClickListener(v -> openCategory(RecipeCategory.QUICK_EASY));
         findViewById(R.id.categoryDinner).setOnClickListener(v -> openCategory(RecipeCategory.DINNER));
@@ -86,6 +88,19 @@ public class HomeActivity extends AppCompatActivity {
         Intent intent = new Intent(this, RecipeCategoryActivity.class);
         intent.putExtra(RecipeCategoryActivity.EXTRA_CATEGORY, categoryId);
         startActivity(intent);
+    }
+
+    private void openPersonalDestination(Class<?> destination) {
+        if (auth != null && auth.getCurrentUser() != null) {
+            startActivity(new Intent(this, destination));
+            return;
+        }
+        if (!firebaseConfigured) {
+            Toast.makeText(this, R.string.firebase_setup_needed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        pendingDestination = destination;
+        startActivityForResult(new Intent(this, AuthActivity.class), REQUEST_PRIVATE_FEATURE_AUTH);
     }
 
     private void toggleAccountPanel() {
@@ -197,6 +212,20 @@ public class HomeActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ACCOUNT_AUTH) {
             updateAccountSummary();
+            if (resultCode == RESULT_OK && auth != null && auth.getCurrentUser() != null) syncSignedInUser();
+        } else if (requestCode == REQUEST_PRIVATE_FEATURE_AUTH) {
+            Class<?> destination = pendingDestination;
+            pendingDestination = null;
+            if (resultCode == RESULT_OK && auth != null && auth.getCurrentUser() != null && destination != null) {
+                CloudBackupManager.restoreAndBackup(this, error -> {
+                    if (isFinishing()) return;
+                    updateAccountSummary();
+                    if (error != null) Toast.makeText(this, "Could not sync cloud backup. Showing this account's saved data.", Toast.LENGTH_LONG).show();
+                    startActivity(new Intent(this, destination));
+                });
+            } else {
+                updateAccountSummary();
+            }
         }
     }
 

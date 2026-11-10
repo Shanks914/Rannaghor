@@ -6,12 +6,20 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.sadat.rannaghor.model.MealPlanEntry;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.model.ShoppingItem;
 
-// Single Room database for the whole app: favourites, the meal plan
-// and the shopping list all live here, on the phone, so they work offline.
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
+
+// Personal Room databases keep each Firebase account's favourites, plan and
+// shopping list isolated while retaining offline access for that account.
 @Database(
         entities = {Recipe.class, MealPlanEntry.class, ShoppingItem.class},
         version = 1,
@@ -23,20 +31,42 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract MealPlanDao mealPlanDao();
     public abstract ShoppingDao shoppingDao();
 
-    private static volatile AppDatabase INSTANCE;
+    private static final Map<String, AppDatabase> INSTANCES = new HashMap<>();
 
     public static AppDatabase getInstance(Context context) {
-        if (INSTANCE == null) {
-            synchronized (AppDatabase.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(
-                                    context.getApplicationContext(),
-                                    AppDatabase.class,
-                                    "rannaghor.db")
-                            .build();
-                }
-            }
+        String uid = null;
+        Context appContext = context.getApplicationContext();
+        if (!FirebaseApp.getApps(appContext).isEmpty()) {
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            if (auth.getCurrentUser() != null) uid = auth.getCurrentUser().getUid();
         }
-        return INSTANCE;
+        return getInstanceForUser(appContext, uid);
+    }
+
+    /** Returns the database for an explicit account, used by async cloud operations. */
+    public static AppDatabase getInstanceForUser(Context context, String uid) {
+        Context appContext = context.getApplicationContext();
+        String databaseName = uid == null || uid.isEmpty()
+                ? "rannaghor_guest.db"
+                : "rannaghor_user_" + stableHash(uid) + ".db";
+        synchronized (AppDatabase.class) {
+            AppDatabase instance = INSTANCES.get(databaseName);
+            if (instance == null) {
+                instance = Room.databaseBuilder(appContext, AppDatabase.class, databaseName).build();
+                INSTANCES.put(databaseName, instance);
+            }
+            return instance;
+        }
+    }
+
+    private static String stableHash(String value) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < 12; i++) result.append(String.format(java.util.Locale.ROOT, "%02x", digest[i] & 0xff));
+            return result.toString();
+        } catch (NoSuchAlgorithmException impossible) {
+            return Integer.toHexString(value.hashCode());
+        }
     }
 }

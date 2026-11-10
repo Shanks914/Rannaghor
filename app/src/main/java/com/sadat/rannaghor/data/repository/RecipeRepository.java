@@ -38,14 +38,18 @@ public class RecipeRepository {
     }
 
     private final MealDbApi api = new MealDbApi();
-    private final AppDatabase db;
     private final Context appContext;
+    private final AppDatabase db;
+    private final String accountUid;
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainThread = new Handler(Looper.getMainLooper());
 
     public RecipeRepository(Context context) {
         appContext = context.getApplicationContext();
-        db = AppDatabase.getInstance(context);
+        accountUid = CloudBackupManager.isConfigured(appContext)
+                && com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null
+                ? com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        db = AppDatabase.getInstanceForUser(appContext, accountUid);
     }
 
     /**
@@ -286,7 +290,7 @@ public class RecipeRepository {
         dbExecutor.execute(() -> {
             recipe.isFavorite = !recipe.isFavorite;
             db.recipeDao().insert(recipe); // insert = REPLACE, acts as upsert
-            CloudBackupManager.backup(appContext);
+            CloudBackupManager.backupForUser(appContext, accountUid);
             if (onDone != null) mainThread.post(onDone);
         });
     }

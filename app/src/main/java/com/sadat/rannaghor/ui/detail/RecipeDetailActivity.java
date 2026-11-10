@@ -39,6 +39,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private RecipeReviewAdapter reviewAdapter;
     private int selectedRating;
     private int pendingRating;
+    private boolean pendingFavorite;
     private static final int REQUEST_REVIEW_AUTH = 410;
 
     @Override
@@ -186,16 +187,51 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_REVIEW_AUTH && resultCode == RESULT_OK) {
-            if (pendingRating > 0) selectedRating = pendingRating;
-            pendingRating = 0;
-            renderStars();
-            loadReviews();
+        if (requestCode == REQUEST_REVIEW_AUTH) {
+            if (resultCode != RESULT_OK || !isSignedIn()) {
+                pendingRating = 0;
+                pendingFavorite = false;
+                return;
+            }
+            CloudBackupManager.restoreAndBackup(this, error -> {
+                if (isFinishing() || currentRecipe == null) return;
+                repository = new RecipeRepository(this);
+                if (error != null) Toast.makeText(this, "Could not sync cloud backup. Using this account's saved data.", Toast.LENGTH_LONG).show();
+                repository.getRecipeDetail(currentRecipe.id, new RecipeRepository.SingleRecipeCallback() {
+                    @Override public void onResult(Recipe accountRecipe) {
+                        currentRecipe = accountRecipe;
+                        bindRecipe(accountRecipe);
+                        if (pendingRating > 0) selectedRating = pendingRating;
+                        pendingRating = 0;
+                        renderStars();
+                        if (pendingFavorite) {
+                            pendingFavorite = false;
+                            toggleFavorite();
+                        }
+                    }
+                    @Override public void onError(String message) {
+                        Toast.makeText(RecipeDetailActivity.this, message, Toast.LENGTH_LONG).show();
+                        if (pendingFavorite) {
+                            pendingFavorite = false;
+                            toggleFavorite();
+                        }
+                        if (pendingRating > 0) selectedRating = pendingRating;
+                        pendingRating = 0;
+                        renderStars();
+                        loadReviews();
+                    }
+                });
+            });
         }
     }
 
     private void toggleFavorite() {
         if (currentRecipe == null) return;
+        if (!isSignedIn()) {
+            pendingFavorite = true;
+            openAuth();
+            return;
+        }
         repository.toggleFavorite(currentRecipe, () -> {
             favoriteButton.setImageResource(currentRecipe.isFavorite
                     ? R.drawable.ic_heart_filled
