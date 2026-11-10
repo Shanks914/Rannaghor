@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.RecipeRepository;
 import com.sadat.rannaghor.data.repository.RecipeReviewRepository;
@@ -46,6 +47,9 @@ public class RecipesActivity extends AppCompatActivity {
         if (planningFlow) {
             ((TextView) findViewById(R.id.textRecipesScreenTitle)).setText("Choose a recipe");
             ((TextView) findViewById(R.id.textRecipesScreenSubtitle)).setText("Find something delicious for your planned meal.");
+            View chooseFavorite = findViewById(R.id.buttonChooseFavoriteRecipe);
+            chooseFavorite.setVisibility(View.VISIBLE);
+            chooseFavorite.setOnClickListener(v -> chooseFavoriteRecipe());
         }
         repository = new RecipeRepository(this);
         findViewById(R.id.buttonRecipesBack).setOnClickListener(v -> finish());
@@ -149,6 +153,24 @@ public class RecipesActivity extends AppCompatActivity {
             MealPlanIntents.copyDraft(getIntent(), intent);
             startActivityForResult(intent, REQUEST_PLANNED_RECIPE);
         } else startActivity(intent);
+    }
+
+    private void chooseFavoriteRecipe() {
+        findViewById(R.id.buttonChooseFavoriteRecipe).setEnabled(false);
+        repository.getFavorites(favorites -> {
+            findViewById(R.id.buttonChooseFavoriteRecipe).setEnabled(true);
+            if (favorites.isEmpty()) {
+                Toast.makeText(this, "You haven’t saved any favourite recipes yet.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String[] names = new String[favorites.size()];
+            for (int i = 0; i < favorites.size(); i++) names[i] = favorites.get(i).name;
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Choose a favourite")
+                    .setItems(names, (dialog, which) -> openRecipe(favorites.get(which)))
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
     }
 
     private void openRatedRecipe(RatedRecipe recipe) {
