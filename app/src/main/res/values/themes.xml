@@ -19,28 +19,6 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <style name="HomeCategoryItem">
-        <item name="android:orientation">vertical</item>
-        <item name="android:gravity">center_horizontal</item>
-        <item name="android:paddingVertical">4dp</item>
-    </style>
-
-    <style name="HomeCategoryImage">
-        <item name="android:scaleType">centerCrop</item>
-        <item name="android:background">@drawable/bg_category_circle</item>
-        <item name="android:clipToOutline">true</item>
-    </style>
-
-    <style name="HomeCategoryLabel">
-        <item name="android:gravity">center</item>
-        <item name="android:paddingHorizontal">3dp</item>
-        <item name="android:textColor">@color/text_primary</item>
-        <item name="android:textSize">11sp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:fontFamily">@font/red_hat_text</item>
-        <item name="android:textAllCaps">true</item>
-    </style>
-
     <style name="HomeActionCard">
         <item name="cardCornerRadius">16dp</item>
         <item name="cardElevation">2dp</item>
@@ -72,6 +50,60 @@
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="HomeRecipeCategoryRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">2dp</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="HomeRecipeCategoryCard">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">152dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginHorizontal">6dp</item>
+        <item name="android:layout_marginBottom">10dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="strokeColor">@color/divider</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+    </style>
+
+    <style name="HomeRecipeCategoryContent">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="HomeRecipeCategoryImage">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">106dp</item>
+        <item name="android:scaleType">centerCrop</item>
+        <item name="android:contentDescription">@null</item>
+    </style>
+
+    <style name="HomeRecipeCategoryLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingHorizontal">5dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/red_hat_text</item>
+    </style>
+
+    <style name="HomeRecipeCategorySpacer">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginHorizontal">6dp</item>
     </style>
 
     <style name="RecipeRatingStar">

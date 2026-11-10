@@ -224,56 +224,83 @@
                 android:textStyle="bold"
                 android:fontFamily="@font/red_hat_display" />
 
-            <HorizontalScrollView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="10dp"
-                android:clipToPadding="false"
-                android:scrollbars="none">
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp">
+                android:orientation="vertical">
 
-                    <LinearLayout android:id="@+id/categoryQuickEasy" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_quick" android:contentDescription="Quick and easy recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="QUICK AND EASY" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categoryDinner" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_dinner" android:contentDescription="Dinner recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="DINNER" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categoryVegetarian" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_vegetarian" android:contentDescription="Vegetarian recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="VEGETARIAN" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categoryHealthy" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_healthy" android:contentDescription="Healthy recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="HEALTHY" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categoryInstantPot" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_instant_pot" android:contentDescription="Instant Pot recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="INSTANT POT" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categoryVegan" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_vegan" android:contentDescription="Vegan recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="VEGAN" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categorySoups" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_soups" android:contentDescription="Soup recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="SOUPS" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categorySalads" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/category_salads" android:contentDescription="Salad recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="SALADS" />
-                    </LinearLayout>
-                    <LinearLayout android:id="@+id/categoryBangladeshi" style="@style/HomeCategoryItem" android:layout_width="94dp" android:layout_height="wrap_content" android:layout_marginEnd="5dp" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackgroundBorderless">
-                        <ImageView style="@style/HomeCategoryImage" android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/home_khichuri" android:contentDescription="Bangladeshi recipes" />
-                        <TextView style="@style/HomeCategoryLabel" android:layout_width="match_parent" android:layout_height="38dp" android:text="BANGLADESHI" />
-                    </LinearLayout>
+                <LinearLayout style="@style/HomeRecipeCategoryRow">
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categoryQuickEasy" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_quick" android:contentDescription="Quick and easy recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Quick &amp; Easy" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categoryDinner" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_dinner" android:contentDescription="Dinner recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Dinner" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
-            </HorizontalScrollView>
+
+                <LinearLayout style="@style/HomeRecipeCategoryRow">
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categoryVegetarian" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_vegetarian" android:contentDescription="Vegetarian recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Vegetarian" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categoryHealthy" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_healthy" android:contentDescription="Healthy recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Healthy" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <LinearLayout style="@style/HomeRecipeCategoryRow">
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categoryInstantPot" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_instant_pot" android:contentDescription="Instant Pot recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Instant Pot" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categoryVegan" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_vegan" android:contentDescription="Vegan recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Vegan" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <LinearLayout style="@style/HomeRecipeCategoryRow">
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categorySoups" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_soups" android:contentDescription="Soup recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Soups" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categorySalads" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/category_salads" android:contentDescription="Salad recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Salads" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
+
+                <LinearLayout style="@style/HomeRecipeCategoryRow">
+                    <com.google.android.material.card.MaterialCardView android:id="@+id/categoryBangladeshi" style="@style/HomeRecipeCategoryCard">
+                        <LinearLayout style="@style/HomeRecipeCategoryContent">
+                            <ImageView style="@style/HomeRecipeCategoryImage" android:src="@drawable/home_khichuri" android:contentDescription="Bangladeshi recipes" />
+                            <TextView style="@style/HomeRecipeCategoryLabel" android:text="Bangladeshi" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                    <View style="@style/HomeRecipeCategorySpacer" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
