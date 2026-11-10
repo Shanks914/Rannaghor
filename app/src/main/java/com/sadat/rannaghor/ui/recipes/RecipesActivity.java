@@ -21,12 +21,14 @@ import com.sadat.rannaghor.model.RatedRecipe;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.ui.detail.RecipeDetailActivity;
 import com.sadat.rannaghor.ui.home.RecipeAdapter;
+import com.sadat.rannaghor.util.MealPlanIntents;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** Search by recipe title or by ingredients and browse community top-rated recipes. */
 public class RecipesActivity extends AppCompatActivity {
+    private static final int REQUEST_PLANNED_RECIPE = 551;
     private final List<String> ingredients = new ArrayList<>();
     private boolean ingredientMode;
     private RecipeRepository repository;
@@ -35,10 +37,16 @@ public class RecipesActivity extends AppCompatActivity {
     private EditText keywordInput, ingredientInput;
     private ChipGroup ingredientChips;
     private TextView status;
+    private boolean planningFlow;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recipes);
+        planningFlow = getIntent().getBooleanExtra(MealPlanIntents.FLOW, false);
+        if (planningFlow) {
+            ((TextView) findViewById(R.id.textRecipesScreenTitle)).setText("Choose a recipe");
+            ((TextView) findViewById(R.id.textRecipesScreenSubtitle)).setText("Find something delicious for your planned meal.");
+        }
         repository = new RecipeRepository(this);
         findViewById(R.id.buttonRecipesBack).setOnClickListener(v -> finish());
         keywordInput = findViewById(R.id.editRecipeKeyword);
@@ -133,10 +141,25 @@ public class RecipesActivity extends AppCompatActivity {
     private void openRecipe(Recipe recipe) {
         Intent intent = new Intent(this, RecipeDetailActivity.class);
         intent.putExtra(RecipeDetailActivity.EXTRA_RECIPE_ID, recipe.id);
-        startActivity(intent);
+        intent.putExtra("extra_recipe_name", recipe.name);
+        intent.putExtra("extra_recipe_image", recipe.imageUrl);
+        intent.putExtra("extra_instructions", recipe.instructions);
+        intent.putExtra("extra_ingredients_raw", recipe.ingredientsRaw);
+        if (planningFlow) {
+            MealPlanIntents.copyDraft(getIntent(), intent);
+            startActivityForResult(intent, REQUEST_PLANNED_RECIPE);
+        } else startActivity(intent);
     }
 
     private void openRatedRecipe(RatedRecipe recipe) {
         openRecipe(new Recipe(recipe.id, recipe.name, recipe.imageUrl, "", ""));
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_PLANNED_RECIPE && resultCode == RESULT_OK) {
+            setResult(RESULT_OK);
+            finish();
+        }
     }
 }

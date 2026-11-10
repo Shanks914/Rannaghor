@@ -130,6 +130,11 @@ public class ShoppingListActivity extends AccountRequiredActivity {
                 if (recipe == null || recipe.ingredientsRaw == null || recipe.ingredientsRaw.trim().isEmpty()) {
                     recipe = localRecipes.get(entry.recipeId);
                 }
+                if ((recipe == null || recipe.ingredientsRaw == null || recipe.ingredientsRaw.trim().isEmpty())
+                        && entry.ingredientsRaw != null && !entry.ingredientsRaw.trim().isEmpty()) {
+                    recipe = new Recipe(entry.recipeId, entry.recipeName, entry.imageUrl,
+                            entry.instructions, entry.ingredientsRaw);
+                }
                 if (recipe == null) continue;
 
                 List<Ingredient> ingredients = Ingredient.parseList(recipe.ingredientsRaw);

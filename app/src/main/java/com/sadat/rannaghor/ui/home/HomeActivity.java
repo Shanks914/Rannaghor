@@ -30,6 +30,7 @@ import com.sadat.rannaghor.ui.auth.AuthActivity;
 import com.sadat.rannaghor.ui.recipes.RecipesActivity;
 import com.sadat.rannaghor.ui.shopping.ShoppingListActivity;
 import com.sadat.rannaghor.util.ReminderScheduler;
+import com.sadat.rannaghor.util.PlanReminderScheduler;
 
 /** Main navigation hub and account entry point. */
 public class HomeActivity extends AppCompatActivity {
@@ -41,6 +42,7 @@ public class HomeActivity extends AppCompatActivity {
     private static final int REQUEST_ACCOUNT_AUTH = 411;
     private static final int REQUEST_PRIVATE_FEATURE_AUTH = 412;
     private Class<?> pendingDestination;
+    private String switchingFromUid;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -125,10 +127,12 @@ public class HomeActivity extends AppCompatActivity {
                 .create();
         content.findViewById(R.id.buttonSwitchAccount).setOnClickListener(v -> {
             dialog.dismiss();
+            switchingFromUid = auth.getCurrentUser().getUid();
             startActivityForResult(new Intent(this, AuthActivity.class), REQUEST_ACCOUNT_AUTH);
         });
         content.findViewById(R.id.buttonAccountLogout).setOnClickListener(v -> {
             dialog.dismiss();
+            PlanReminderScheduler.cancelAllForUser(getApplicationContext(), userId);
             auth.signOut();
             updateAccountSummary();
             Toast.makeText(this, "You are signed out", Toast.LENGTH_SHORT).show();
@@ -190,6 +194,7 @@ public class HomeActivity extends AppCompatActivity {
                 String reason = error.getLocalizedMessage() == null ? "Check your internet connection and Firestore rules." : error.getLocalizedMessage();
                 Toast.makeText(this, getString(R.string.cloud_sync_failed, reason), Toast.LENGTH_LONG).show();
             } else Toast.makeText(this, R.string.cloud_sync_succeeded, Toast.LENGTH_SHORT).show();
+            PlanReminderScheduler.scheduleAll(getApplicationContext());
         });
     }
 
@@ -212,7 +217,14 @@ public class HomeActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ACCOUNT_AUTH) {
             updateAccountSummary();
-            if (resultCode == RESULT_OK && auth != null && auth.getCurrentUser() != null) syncSignedInUser();
+            if (resultCode == RESULT_OK && auth != null && auth.getCurrentUser() != null) {
+                String nowUid = auth.getCurrentUser().getUid();
+                if (switchingFromUid != null && !switchingFromUid.equals(nowUid)) {
+                    PlanReminderScheduler.cancelAllForUser(getApplicationContext(), switchingFromUid);
+                }
+                switchingFromUid = null;
+                syncSignedInUser();
+            }
         } else if (requestCode == REQUEST_PRIVATE_FEATURE_AUTH) {
             Class<?> destination = pendingDestination;
             pendingDestination = null;

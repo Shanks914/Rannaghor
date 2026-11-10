@@ -5,6 +5,8 @@ import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -22,10 +24,22 @@ import java.util.Map;
 // shopping list isolated while retaining offline access for that account.
 @Database(
         entities = {Recipe.class, MealPlanEntry.class, ShoppingItem.class},
-        version = 1,
+        version = 2,
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {
+
+    private static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+        @Override public void migrate(SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN scheduledAtMillis INTEGER NOT NULL DEFAULT 0");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN durationMinutes INTEGER NOT NULL DEFAULT 30");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN status TEXT NOT NULL DEFAULT 'PLANNED'");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN customMealName TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN imageUrl TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN instructions TEXT NOT NULL DEFAULT ''");
+            db.execSQL("ALTER TABLE meal_plan ADD COLUMN ingredientsRaw TEXT NOT NULL DEFAULT ''");
+        }
+    };
 
     public abstract RecipeDao recipeDao();
     public abstract MealPlanDao mealPlanDao();
@@ -52,7 +66,9 @@ public abstract class AppDatabase extends RoomDatabase {
         synchronized (AppDatabase.class) {
             AppDatabase instance = INSTANCES.get(databaseName);
             if (instance == null) {
-                instance = Room.databaseBuilder(appContext, AppDatabase.class, databaseName).build();
+                instance = Room.databaseBuilder(appContext, AppDatabase.class, databaseName)
+                        .addMigrations(MIGRATION_1_2)
+                        .build();
                 INSTANCES.put(databaseName, instance);
             }
             return instance;

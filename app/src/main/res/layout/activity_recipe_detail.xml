@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background">
@@ -30,15 +31,30 @@
                 android:src="@drawable/ic_back"
                 android:contentDescription="@string/previous_step" />
 
-            <ImageButton
-                android:id="@+id/buttonFavorite"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="end"
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|top"
                 android:layout_margin="16dp"
-                android:background="@drawable/bg_rounded_card"
-                android:src="@drawable/ic_heart_outline"
-                android:contentDescription="@null" />
+                android:orientation="horizontal">
+                <ImageButton
+                    android:id="@+id/buttonPlanRecipe"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_rounded_card"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_calendar"
+                    android:tint="@color/primary"
+                    android:contentDescription="Add recipe to planner" />
+                <ImageButton
+                    android:id="@+id/buttonFavorite"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_rounded_card"
+                    android:src="@drawable/ic_heart_outline"
+                    android:contentDescription="Add to favourites" />
+            </LinearLayout>
 
         </FrameLayout>
 
@@ -58,6 +74,18 @@
                 android:textStyle="bold"
                 tools:text="Creamy Garlic Pasta"
                 xmlns:tools="http://schemas.android.com/tools" />
+
+            <TextView
+                android:id="@+id/buttonAddToPlanner"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_rounded_button"
+                android:gravity="center"
+                android:text="Add to planner"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:visibility="gone" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -93,6 +121,7 @@
                 android:lineSpacingExtra="4dp" />
 
             <TextView
+                android:id="@+id/textRatingsHeading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="26dp"

@@ -169,6 +169,13 @@ public final class CloudBackupManager {
             value.put("mealType", entry.mealType);
             value.put("recipeId", entry.recipeId);
             value.put("recipeName", entry.recipeName);
+            value.put("scheduledAtMillis", entry.scheduledAtMillis);
+            value.put("durationMinutes", entry.durationMinutes);
+            value.put("status", entry.status == null ? "PLANNED" : entry.status);
+            value.put("customMealName", entry.customMealName);
+            value.put("imageUrl", entry.imageUrl);
+            value.put("instructions", entry.instructions);
+            value.put("ingredientsRaw", entry.ingredientsRaw);
             planValues.add(value);
         }
         List<Map<String, Object>> shoppingValues = new ArrayList<>();
@@ -219,6 +226,14 @@ public final class CloudBackupManager {
         entry.mealType = stringValue(values.get("mealType"));
         entry.recipeId = stringValue(values.get("recipeId"));
         entry.recipeName = stringValue(values.get("recipeName"));
+        entry.scheduledAtMillis = longValue(values.get("scheduledAtMillis"));
+        entry.durationMinutes = intValue(values.get("durationMinutes"), 30);
+        entry.status = stringValue(values.get("status"));
+        if (entry.status.isEmpty()) entry.status = "PLANNED";
+        entry.customMealName = stringValue(values.get("customMealName"));
+        entry.imageUrl = stringValue(values.get("imageUrl"));
+        entry.instructions = stringValue(values.get("instructions"));
+        entry.ingredientsRaw = stringValue(values.get("ingredientsRaw"));
         return entry;
     }
 
@@ -236,6 +251,13 @@ public final class CloudBackupManager {
         copy.mealType = source.mealType;
         copy.recipeId = source.recipeId;
         copy.recipeName = source.recipeName;
+        copy.scheduledAtMillis = source.scheduledAtMillis;
+        copy.durationMinutes = source.durationMinutes;
+        copy.status = source.status;
+        copy.customMealName = source.customMealName;
+        copy.imageUrl = source.imageUrl;
+        copy.instructions = source.instructions;
+        copy.ingredientsRaw = source.ingredientsRaw;
         return copy;
     }
 
@@ -254,7 +276,8 @@ public final class CloudBackupManager {
     }
 
     private static String planKey(MealPlanEntry entry) {
-        return safe(entry.date) + "|" + safe(entry.mealType) + "|" + safe(entry.recipeId) + "|" + safe(entry.recipeName);
+        return safe(entry.date) + "|" + safe(entry.mealType) + "|" + safe(entry.customMealName)
+                + "|" + entry.scheduledAtMillis + "|" + safe(entry.recipeId) + "|" + safe(entry.recipeName);
     }
 
     private static String shoppingKey(ShoppingItem item) {
@@ -263,6 +286,14 @@ public final class CloudBackupManager {
 
     private static String stringValue(Object value) {
         return value instanceof String ? (String) value : "";
+    }
+
+    private static long longValue(Object value) {
+        return value instanceof Number ? ((Number) value).longValue() : 0L;
+    }
+
+    private static int intValue(Object value, int fallback) {
+        return value instanceof Number ? ((Number) value).intValue() : fallback;
     }
 
     private static String safe(String value) {

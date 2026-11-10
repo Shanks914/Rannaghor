@@ -1,7 +1,11 @@
 package com.sadat.rannaghor.ui.detail;
 
 import android.content.Intent;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.content.ActivityNotFoundException;
+import android.text.InputType;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -14,19 +18,25 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import com.bumptech.glide.Glide;
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.RecipeRepository;
 import com.sadat.rannaghor.data.repository.RecipeReviewRepository;
 import com.sadat.rannaghor.data.repository.CloudBackupManager;
+import com.sadat.rannaghor.data.repository.MealPlanRepository;
 import com.sadat.rannaghor.model.Ingredient;
 import com.sadat.rannaghor.model.Recipe;
 import com.sadat.rannaghor.model.RecipeReview;
 import com.sadat.rannaghor.ui.auth.AuthActivity;
 import com.sadat.rannaghor.ui.cooking.CookingActivity;
+import com.sadat.rannaghor.ui.planner.PlannerActivity;
+import com.sadat.rannaghor.util.MealPlanIntents;
+import com.sadat.rannaghor.util.PlanReminderScheduler;
 
 import java.util.List;
+import java.util.Calendar;
 
 public class RecipeDetailActivity extends AppCompatActivity {
 
@@ -35,12 +45,18 @@ public class RecipeDetailActivity extends AppCompatActivity {
     private RecipeRepository repository;
     private Recipe currentRecipe;
     private ImageButton favoriteButton;
+    private ImageButton planButton;
     private RecipeReviewRepository reviewRepository;
     private RecipeReviewAdapter reviewAdapter;
     private int selectedRating;
     private int pendingRating;
     private boolean pendingFavorite;
+    private boolean pendingPlan;
     private static final int REQUEST_REVIEW_AUTH = 410;
+    private static final int REQUEST_EXACT_ALARM = 411;
+    private String pendingPlanType, pendingPlanCustomName, pendingPlanDate;
+    private long pendingPlanTime;
+    private boolean waitingForAlarmSettings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +69,7 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
         favoriteButton = findViewById(R.id.buttonFavorite);
+        planButton = findViewById(R.id.buttonPlanRecipe);
         RecyclerView reviews = findViewById(R.id.recyclerRecipeReviews);
         reviews.setLayoutManager(new LinearLayoutManager(this));
         reviewAdapter = new RecipeReviewAdapter();
@@ -77,23 +94,48 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
             @Override
             public void onError(String message) {
-                Toast.makeText(RecipeDetailActivity.this, message, Toast.LENGTH_LONG).show();
+                String cachedName = getIntent().getStringExtra("extra_recipe_name");
+                String cachedInstructions = getIntent().getStringExtra("extra_instructions");
+                if (cachedName != null && cachedInstructions != null) {
+                    Recipe cached = new Recipe(recipeId, cachedName,
+                            getIntent().getStringExtra("extra_recipe_image"), cachedInstructions,
+                            getIntent().getStringExtra("extra_ingredients_raw"));
+                    currentRecipe = cached;
+                    bindRecipe(cached);
+                } else Toast.makeText(RecipeDetailActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void bindRecipe(Recipe recipe) {
+        boolean planningFlow = getIntent().getBooleanExtra(MealPlanIntents.FLOW, false);
         ((TextView) findViewById(R.id.textRecipeTitle)).setText(recipe.name);
         ((TextView) findViewById(R.id.textInstructions)).setText(recipe.instructions);
 
         ImageView image = findViewById(R.id.imageRecipeDetail);
         Glide.with(this).load(recipe.imageUrl).centerCrop().into(image);
 
+        favoriteButton.setVisibility(planningFlow ? android.view.View.GONE : android.view.View.VISIBLE);
+        planButton.setVisibility(planningFlow ? android.view.View.GONE : android.view.View.VISIBLE);
         favoriteButton.setImageResource(recipe.isFavorite
                 ? R.drawable.ic_heart_filled
                 : R.drawable.ic_heart_outline);
         favoriteButton.setOnClickListener(v -> toggleFavorite());
-        loadReviews();
+        planButton.setOnClickListener(v -> {
+            if (!isSignedIn()) { pendingPlan = true; openAuth(); }
+            else promptPlanForRecipe();
+        });
+        findViewById(R.id.buttonAddToPlanner).setVisibility(planningFlow ? android.view.View.VISIBLE : android.view.View.GONE);
+        findViewById(R.id.buttonAddToPlanner).setOnClickListener(v -> addRecipeFromPlannerFlow());
+        int reviewsVisibility = planningFlow ? android.view.View.GONE : android.view.View.VISIBLE;
+        findViewById(R.id.textRatingsHeading).setVisibility(reviewsVisibility);
+        findViewById(R.id.textRatingSummary).setVisibility(reviewsVisibility);
+        findViewById(R.id.layoutRatingStars).setVisibility(reviewsVisibility);
+        findViewById(R.id.editRecipeReview).setVisibility(reviewsVisibility);
+        findViewById(R.id.buttonSubmitReview).setVisibility(reviewsVisibility);
+        findViewById(R.id.recyclerRecipeReviews).setVisibility(reviewsVisibility);
+        findViewById(R.id.buttonStartCooking).setVisibility(planningFlow ? android.view.View.GONE : android.view.View.VISIBLE);
+        if (!planningFlow) loadReviews();
 
         LinearLayout ingredientList = findViewById(R.id.layoutIngredients);
         ingredientList.removeAllViews();
@@ -110,6 +152,11 @@ public class RecipeDetailActivity extends AppCompatActivity {
             intent.putExtra(RecipeDetailActivity.EXTRA_RECIPE_ID, recipe.id);
             intent.putExtra("extra_recipe_name", recipe.name);
             intent.putExtra("extra_instructions", recipe.instructions);
+            long planId = getIntent().getLongExtra(MealPlanIntents.PLAN_ID, -1L);
+            if (planId > 0) {
+                intent.putExtra(MealPlanIntents.PLAN_ID, planId);
+                MealPlanRepository.setStatus(this, planId, "IN_PROGRESS");
+            }
             startActivity(intent);
         });
         int[] stars = {R.id.ratingStar1, R.id.ratingStar2, R.id.ratingStar3, R.id.ratingStar4, R.id.ratingStar5};
@@ -187,10 +234,16 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_EXACT_ALARM) {
+            waitingForAlarmSettings = false;
+            continueSavingScheduledRecipe();
+            return;
+        }
         if (requestCode == REQUEST_REVIEW_AUTH) {
             if (resultCode != RESULT_OK || !isSignedIn()) {
                 pendingRating = 0;
                 pendingFavorite = false;
+                pendingPlan = false;
                 return;
             }
             CloudBackupManager.restoreAndBackup(this, error -> {
@@ -208,6 +261,10 @@ public class RecipeDetailActivity extends AppCompatActivity {
                             pendingFavorite = false;
                             toggleFavorite();
                         }
+                        if (pendingPlan) {
+                            pendingPlan = false;
+                            promptPlanForRecipe();
+                        }
                     }
                     @Override public void onError(String message) {
                         Toast.makeText(RecipeDetailActivity.this, message, Toast.LENGTH_LONG).show();
@@ -219,10 +276,148 @@ public class RecipeDetailActivity extends AppCompatActivity {
                         pendingRating = 0;
                         renderStars();
                         loadReviews();
+                        if (pendingPlan) {
+                            pendingPlan = false;
+                            promptPlanForRecipe();
+                        }
                     }
                 });
             });
         }
+    }
+
+    private void addRecipeFromPlannerFlow() {
+        if (currentRecipe == null) return;
+        String date = getIntent().getStringExtra(MealPlanIntents.DATE);
+        String type = getIntent().getStringExtra(MealPlanIntents.TYPE);
+        String customName = getIntent().getStringExtra(MealPlanIntents.CUSTOM_NAME);
+        long scheduledAt = getIntent().getLongExtra(MealPlanIntents.TIME, 0L);
+        if (date == null || type == null || scheduledAt <= System.currentTimeMillis()) {
+            Toast.makeText(this, "This planned meal time has passed. Start again from the planner.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        saveToPlanner(date, type, customName, scheduledAt, true);
+    }
+
+    private void promptPlanForRecipe() {
+        if (currentRecipe == null) return;
+        String[] types = {"Breakfast", "Lunch", "Dinner", "Anything else"};
+        new MaterialAlertDialogBuilder(this).setTitle("Choose a meal")
+                .setItems(types, (dialog, which) -> {
+                    if (which == 3) promptCustomMealName();
+                    else promptPlanDate(types[which], null);
+                }).setNegativeButton("Cancel", null).show();
+    }
+
+    private void promptCustomMealName() {
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setSingleLine(true);
+        input.setHint("e.g. Post workout meal");
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        new MaterialAlertDialogBuilder(this).setTitle("Name this meal").setView(input)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Next", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (name.isEmpty()) Toast.makeText(this, "Enter a name for this meal", Toast.LENGTH_SHORT).show();
+                    else promptPlanDate("Anything else", name);
+                }).show();
+    }
+
+    private void promptPlanDate(String type, String customName) {
+        Calendar today = Calendar.getInstance();
+        Calendar chosen = (Calendar) today.clone();
+        chosen.set(Calendar.HOUR_OF_DAY, 0); chosen.set(Calendar.MINUTE, 0);
+        chosen.set(Calendar.SECOND, 0); chosen.set(Calendar.MILLISECOND, 0);
+        DatePickerDialog picker = new DatePickerDialog(this, (view, year, month, day) -> {
+            chosen.set(year, month, day);
+            promptPlanTime(type, customName, chosen);
+        }, today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
+        picker.getDatePicker().setMinDate(chosen.getTimeInMillis());
+        picker.show();
+    }
+
+    private void promptPlanTime(String type, String customName, Calendar chosenDate) {
+        Calendar now = Calendar.getInstance();
+        new TimePickerDialog(this, (view, hour, minute) -> {
+            Calendar scheduled = (Calendar) chosenDate.clone();
+            scheduled.set(Calendar.HOUR_OF_DAY, hour);
+            scheduled.set(Calendar.MINUTE, minute);
+            scheduled.set(Calendar.SECOND, 0);
+            scheduled.set(Calendar.MILLISECOND, 0);
+            if (scheduled.getTimeInMillis() <= System.currentTimeMillis()) {
+                Toast.makeText(this, "Choose a future time", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            pendingPlanDate = MealPlanRepository.dateString(scheduled.getTimeInMillis());
+            pendingPlanType = type;
+            pendingPlanCustomName = customName;
+            pendingPlanTime = scheduled.getTimeInMillis();
+            continuePlanAfterAlarmPermissionCheck();
+        }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), false).show();
+    }
+
+    private void continuePlanAfterAlarmPermissionCheck() {
+        if (PlanReminderScheduler.hasExactAlarmAccess(this)) {
+            continueSavingScheduledRecipe();
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Allow on-time meal reminders?")
+                .setMessage("Rannaghor can use an exact alarm so the cooking reminder arrives before your planned meal time.")
+                .setPositiveButton("Open settings", (dialog, which) -> {
+                    try {
+                        waitingForAlarmSettings = true;
+                        startActivityForResult(PlanReminderScheduler.exactAlarmSettingsIntent(this), REQUEST_EXACT_ALARM);
+                    }
+                    catch (ActivityNotFoundException unavailable) { continueSavingScheduledRecipe(); }
+                })
+                .setNegativeButton("Continue", (dialog, which) -> continueSavingScheduledRecipe())
+                .show();
+    }
+
+    private void continueSavingScheduledRecipe() {
+        if (pendingPlanType == null || pendingPlanDate == null || pendingPlanTime <= 0) return;
+        if (pendingPlanTime <= System.currentTimeMillis()) {
+            Toast.makeText(this, "Choose a future time", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String type = pendingPlanType;
+        String customName = pendingPlanCustomName;
+        String date = pendingPlanDate;
+        long scheduledAt = pendingPlanTime;
+        pendingPlanType = null;
+        pendingPlanCustomName = null;
+        pendingPlanDate = null;
+        pendingPlanTime = 0L;
+        saveToPlanner(date, type, customName, scheduledAt, false);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (waitingForAlarmSettings) {
+            waitingForAlarmSettings = false;
+            continueSavingScheduledRecipe();
+        }
+    }
+
+    private void saveToPlanner(String date, String type, String customName, long scheduledAt, boolean returnToRecipePicker) {
+        MealPlanRepository.save(this, currentRecipe, date, type, customName, scheduledAt, (entry, error) -> {
+            if (isFinishing()) return;
+            if (error != null || entry == null) {
+                Toast.makeText(this, error == null ? "Could not add this meal" : error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                return;
+            }
+            int lead = entry.durationMinutes;
+            Toast.makeText(this, "Added to planner. We’ll remind you " + lead + " minutes before.", Toast.LENGTH_LONG).show();
+            if (returnToRecipePicker) {
+                setResult(RESULT_OK);
+                finish();
+            } else {
+                Intent planner = new Intent(this, PlannerActivity.class);
+                planner.putExtra(MealPlanIntents.DATE, date);
+                startActivity(planner);
+            }
+        });
     }
 
     private void toggleFavorite() {

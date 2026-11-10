@@ -8,61 +8,99 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
+        android:paddingHorizontal="18dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="10dp"
         android:gravity="center_vertical">
 
         <ImageButton
             android:id="@+id/buttonBack"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_back"
-            android:contentDescription="@string/previous_step" />
+            android:contentDescription="Back" />
 
-        <TextView
-            android:id="@+id/buttonPreviousDay"
-            android:layout_width="40dp"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:text="‹"
-            android:textColor="@color/primary"
-            android:textSize="30sp"
-            android:contentDescription="@string/previous_day" />
-
-        <TextView
-            android:id="@+id/textSelectedDate"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center"
-            android:textColor="@color/text_primary"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/buttonNextDay"
-            android:layout_width="40dp"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:text="›"
-            android:textColor="@color/primary"
-            android:textSize="30sp"
-            android:contentDescription="@string/next_day" />
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MEAL PLANNER"
+                android:textColor="@color/primary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12" />
+            <TextView
+                android:id="@+id/textSelectedDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:paddingVertical="3dp"
+                android:text="Today"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/red_hat_display"
+                android:clickable="true"
+                android:focusable="true"
+                android:drawableEnd="@drawable/ic_calendar"
+                android:drawablePadding="8dp"
+                android:contentDescription="Select a day" />
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/buttonAddMeal"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
             android:background="@drawable/bg_rounded_button"
+            android:padding="11dp"
             android:src="@drawable/ic_add"
-            android:contentDescription="@string/add_to_plan" />
+            android:contentDescription="Add a meal to the plan" />
     </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="6dp"
+        android:text="What are we eating?"
+        android:textColor="@color/text_primary"
+        android:textSize="27sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/red_hat_display" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginBottom="14dp"
+        android:text="Plan a meal and we’ll remind you when it’s time to start cooking."
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/textPlannerEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginVertical="20dp"
+        android:gravity="center"
+        android:text="Nothing planned for this day yet. Tap + to add a meal."
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerMealPlan"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
-
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp" />
 </LinearLayout>

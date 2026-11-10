@@ -13,6 +13,10 @@ import androidx.core.content.ContextCompat;
 
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.service.CookingTimerService;
+import com.sadat.rannaghor.data.repository.MealPlanRepository;
+import com.sadat.rannaghor.util.MealPlanIntents;
+import com.sadat.rannaghor.util.PlanReminderScheduler;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +38,7 @@ public class CookingActivity extends AppCompatActivity {
     private TextView timerStatus, timerCountdown, pauseResumeButton;
     private View timerPanel, restartButton, endButton, navigation;
     private TextView cookingTitle;
+    private long plannedMealId = -1L;
 
     private final BroadcastReceiver timerStateReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) { renderTimer(); }
@@ -46,6 +51,18 @@ public class CookingActivity extends AppCompatActivity {
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
         cookingTitle = findViewById(R.id.textCookingTitle);
+        plannedMealId = getIntent().getLongExtra(MealPlanIntents.PLAN_ID, -1L);
+        String notificationUid = getIntent().getStringExtra(PlanReminderScheduler.EXTRA_ACCOUNT_UID);
+        if (notificationUid != null && (FirebaseAuth.getInstance().getCurrentUser() == null
+                || !notificationUid.equals(FirebaseAuth.getInstance().getCurrentUser().getUid()))) {
+            finish();
+            return;
+        }
+        if (plannedMealId > 0) {
+            MealPlanRepository.setStatus(this, plannedMealId, "IN_PROGRESS");
+            android.app.NotificationManager notifications = getSystemService(android.app.NotificationManager.class);
+            if (notifications != null) notifications.cancel((int) (plannedMealId % Integer.MAX_VALUE));
+        }
         stepCounter = findViewById(R.id.textStepCounter);
         stepText = findViewById(R.id.textStepContent);
         startTimerButton = findViewById(R.id.buttonStartTimer);
@@ -61,6 +78,7 @@ public class CookingActivity extends AppCompatActivity {
         navigation = (View) next.getParent();
         next.setOnClickListener(v -> {
             if (currentStep < steps.size() - 1) { currentStep++; renderStep(); }
+            else finishCooking();
         });
         previous.setOnClickListener(v -> {
             if (currentStep > 0) { currentStep--; renderStep(); }
@@ -79,6 +97,18 @@ public class CookingActivity extends AppCompatActivity {
 
         updateMode(getIntent());
         renderStep();
+    }
+
+    private void finishCooking() {
+        if (plannedMealId > 0) {
+            MealPlanRepository.setStatus(this, plannedMealId, "COMPLETED", () -> {
+                if (isFinishing()) return;
+                android.widget.Toast.makeText(this, "Meal marked completed", android.widget.Toast.LENGTH_SHORT).show();
+                finish();
+            });
+            return;
+        }
+        finish();
     }
 
     @Override protected void onResume() {
@@ -144,6 +174,8 @@ public class CookingActivity extends AppCompatActivity {
         String step = steps.get(currentStep);
         stepCounter.setText((currentStep + 1) + " / " + steps.size());
         stepText.setText(step);
+        TextView next = findViewById(R.id.buttonNextStep);
+        next.setText(currentStep == steps.size() - 1 ? "Finish cooking" : getString(R.string.next_step));
         if (!timerOnly) {
             int seconds = getCurrentStepDurationSeconds();
             CookingTimerService.TimerSnapshot state = CookingTimerService.getSnapshot(this);

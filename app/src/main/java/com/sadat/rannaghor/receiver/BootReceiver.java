@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.sadat.rannaghor.util.ReminderScheduler;
+import com.sadat.rannaghor.util.PlanReminderScheduler;
 
 /**
  * AlarmManager alarms are cleared when the phone restarts, so this
@@ -16,6 +17,7 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             ReminderScheduler.scheduleDailyReminder(context);
+            PlanReminderScheduler.scheduleAll(context.getApplicationContext());
         }
     }
 }
