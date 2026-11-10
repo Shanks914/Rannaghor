@@ -13,7 +13,7 @@ import java.util.List;
 public interface MealPlanDao {
 
     @Insert
-    void insert(MealPlanEntry entry);
+    long insert(MealPlanEntry entry);
 
     @Delete
     void delete(MealPlanEntry entry);

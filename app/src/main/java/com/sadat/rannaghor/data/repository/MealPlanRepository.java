@@ -49,7 +49,7 @@ public final class MealPlanRepository {
         entry.status = "PLANNED";
         EXECUTOR.execute(() -> {
             try {
-                AppDatabase.getInstanceForUser(app, uid).mealPlanDao().insert(entry);
+                entry.id = AppDatabase.getInstanceForUser(app, uid).mealPlanDao().insert(entry);
                 PlanReminderScheduler.schedule(app, entry, uid);
                 CloudBackupManager.backupForUser(app, uid);
                 MAIN.post(() -> callback.onSaved(entry, null));
