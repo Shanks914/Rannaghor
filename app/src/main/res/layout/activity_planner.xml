@@ -28,14 +28,6 @@
             android:orientation="vertical"
             android:layout_marginStart="12dp">
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="MEAL PLANNER"
-                android:textColor="@color/primary"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.12" />
-            <TextView
                 android:id="@+id/textSelectedDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -48,8 +40,6 @@
                 android:fontFamily="@font/red_hat_display"
                 android:clickable="true"
                 android:focusable="true"
-                android:drawableEnd="@drawable/ic_calendar"
-                android:drawablePadding="8dp"
                 android:contentDescription="Select a day" />
         </LinearLayout>
 
