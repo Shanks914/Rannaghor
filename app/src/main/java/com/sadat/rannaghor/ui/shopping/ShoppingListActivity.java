@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.core.util.Pair;
 
+import com.google.android.material.datepicker.CalendarConstraints;
+import com.google.android.material.datepicker.DateValidatorPointForward;
 import com.google.android.material.datepicker.MaterialDatePicker;
 
 import com.sadat.rannaghor.R;
@@ -23,11 +25,9 @@ import com.sadat.rannaghor.util.LocalRecipeLoader;
 import com.sadat.rannaghor.ui.auth.AccountRequiredActivity;
 import com.google.firebase.auth.FirebaseAuth;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -57,8 +57,6 @@ public class ShoppingListActivity extends AccountRequiredActivity {
         setContentView(R.layout.activity_shopping_list);
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> finish());
-        selectedStartDate = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        selectedEndDate = selectedStartDate.plusDays(6);
         selectedWeekLabel = findViewById(R.id.textSelectedWeek);
         updateWeekLabel();
         selectedWeekLabel.setOnClickListener(v -> showDateRangePicker());
@@ -111,9 +109,13 @@ public class ShoppingListActivity extends AccountRequiredActivity {
     }
 
     private void generateFromSelectedRange() {
+        if (selectedStartDate == null || selectedEndDate == null) {
+            Toast.makeText(this, "Select a date range first.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String startDate = selectedStartDate.toString();
+        String endDate = selectedEndDate.toString();
         executor.execute(() -> {
-            String startDate = selectedStartDate.toString();
-            String endDate = selectedEndDate.toString();
             List<MealPlanEntry> plannedMeals = accountDatabase.mealPlanDao().getForWeek(startDate, endDate);
             if (plannedMeals.isEmpty()) {
                 runOnUiThread(() -> Toast.makeText(this, R.string.no_meals_this_week, Toast.LENGTH_SHORT).show());
@@ -189,24 +191,41 @@ public class ShoppingListActivity extends AccountRequiredActivity {
     }
 
     private void showDateRangePicker() {
-        long startMillis = selectedStartDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
-        long endMillis = selectedEndDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
         MaterialDatePicker.Builder<Pair<Long, Long>> builder = MaterialDatePicker.Builder.dateRangePicker();
-        builder.setTitleText("Select dates for your meal plan");
-        builder.setSelection(new Pair<>(startMillis, endMillis));
+        builder.setTitleText("Select date range");
+        if (selectedStartDate != null && selectedEndDate != null) {
+            long startMillis = selectedStartDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+            long endMillis = selectedEndDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+            builder.setSelection(new Pair<>(startMillis, endMillis));
+        }
+        long todayMillis = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+        CalendarConstraints constraints = new CalendarConstraints.Builder()
+                .setValidator(DateValidatorPointForward.from(todayMillis))
+                .build();
+        builder.setCalendarConstraints(constraints);
         MaterialDatePicker<Pair<Long, Long>> picker = builder.build();
         picker.addOnPositiveButtonClickListener(selection -> {
             if (selection.first == null || selection.second == null) return;
-            selectedStartDate = java.time.Instant.ofEpochMilli(selection.first)
+            LocalDate start = java.time.Instant.ofEpochMilli(selection.first)
                     .atZone(ZoneOffset.UTC).toLocalDate();
-            selectedEndDate = java.time.Instant.ofEpochMilli(selection.second)
+            LocalDate end = java.time.Instant.ofEpochMilli(selection.second)
                     .atZone(ZoneOffset.UTC).toLocalDate();
+            if (start.isBefore(LocalDate.now())) {
+                Toast.makeText(this, "Past dates can’t be selected.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            selectedStartDate = start;
+            selectedEndDate = end;
             updateWeekLabel();
         });
         picker.show(getSupportFragmentManager(), "shopping_date_range");
     }
 
     private void updateWeekLabel() {
+        if (selectedStartDate == null || selectedEndDate == null) {
+            selectedWeekLabel.setText("Select date range");
+            return;
+        }
         DateTimeFormatter monthDay = DateTimeFormatter.ofPattern("MMM d", Locale.getDefault());
         DateTimeFormatter full = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault());
         String range;
