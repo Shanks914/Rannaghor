@@ -69,7 +69,7 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_search_box"
             android:gravity="center"
-            android:hint="6-digit email code"
+            android:hint="Email verification code"
             android:inputType="number"
             android:maxLength="6"
             android:letterSpacing="0.25"
@@ -160,7 +160,7 @@
             android:layout_gravity="center_horizontal"
             android:gravity="center"
             android:paddingHorizontal="8dp"
-            android:text="Resend code"
+            android:text="Resend email"
             android:textColor="@color/primary"
             android:textStyle="bold"
             android:visibility="gone" />

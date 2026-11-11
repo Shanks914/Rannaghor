@@ -55,7 +55,7 @@ public class HomeActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private boolean firebaseConfigured;
     private View accountPanel;
-    private TextView accountButton, loginButton, createAccountButton;
+    private TextView loginButton, createAccountButton;
     private ImageView homeAvatar;
     private ActivityResultLauncher<String> profilePicker;
     private static final int REQUEST_ACCOUNT_AUTH = 411;
@@ -79,12 +79,11 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         accountPanel = findViewById(R.id.accountPanel);
-        accountButton = findViewById(R.id.buttonAccount);
         homeAvatar = findViewById(R.id.imageHomeAvatar);
         loginButton = findViewById(R.id.buttonLogin);
         createAccountButton = findViewById(R.id.buttonCreateAccount);
 
-        accountButton.setOnClickListener(v -> toggleAccountPanel());
+        homeAvatar.setOnClickListener(v -> toggleAccountPanel());
         loginButton.setOnClickListener(v -> launchAuth(false));
         createAccountButton.setOnClickListener(v -> launchAuth(true));
 
@@ -212,9 +211,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private void updateAccountSummary() {
         boolean signedIn = auth != null && auth.getCurrentUser() != null;
-        String email = signedIn ? auth.getCurrentUser().getEmail() : null;
-        accountButton.setText(signedIn ? (email == null ? "My account" : email) : "Sign in");
-        accountButton.setContentDescription(signedIn ? "Account for " + (email == null ? "signed-in user" : email) : "Sign in");
+        homeAvatar.setContentDescription(signedIn ? "Account menu" : "Sign in or create an account");
         if (signedIn) {
             accountPanel.setVisibility(View.GONE);
             loadProfilePhoto(auth.getCurrentUser().getUid(), homeAvatar);
@@ -406,7 +403,7 @@ public class HomeActivity extends AppCompatActivity {
 
     @Override protected void onResume() {
         super.onResume();
-        if (accountButton != null) updateAccountSummary();
+        if (homeAvatar != null) updateAccountSummary();
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {

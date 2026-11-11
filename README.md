@@ -38,29 +38,15 @@ This checkout has `gradle/wrapper/gradle-wrapper.properties` but is missing the 
 3. In Firebase Authentication, enable **Email/Password** and **Google** providers.
 4. Add the Android app's SHA-1 and SHA-256 signing fingerprints in Firebase Project Settings, then download the refreshed `google-services.json` into `app/`. The Google provider's Web client ID must be present in that file.
 5. Create a Cloud Firestore database. Publish the contents of [`firestore.rules`](firestore.rules) in its **Rules** tab.
-6. Sync Gradle and run the app. Existing email/password accounts can still log in normally. New email signups use the verification-code flow; Google sign-in uses Android Credential Manager.
+6. Sync Gradle and run the app. Existing email/password accounts can still log in normally. New email signups use Firebase's email verification link; Google sign-in uses Android Credential Manager.
 
 ### Email-code signup and account services
 
-Sending six-digit verification codes needs a secure server and an SMTP sender. Firebase Authentication's built-in email verification is a link, not a six-digit code. This repository includes callable Cloud Functions that generate, rate-limit, expire, and verify codes before creating an email/password account.
+New email/password accounts are created through Firebase Authentication and receive Firebase's built-in email verification link. This works on the Spark plan and does not require an SMTP sender, Cloud Functions, or a billing upgrade. After tapping the link, return to the app and tap **I've verified**. The app's password-reset option also uses Firebase's reset link.
 
-Cloud Functions deployment requires the Firebase **Blaze** billing plan. The plan is pay-as-you-go; no-cost quotas may cover light use, but charges are not guaranteed to be zero. No billing plan is enabled by this repository. Pick an SMTP provider and keep its credentials private.
+The repository still contains an optional Cloud Functions implementation for numeric six-digit codes. Do not deploy those functions while keeping the project on Spark; the app no longer calls them. Numeric codes require a server and email sender, and deploying Cloud Functions requires Blaze billing. For free-plan setup, skip the `functions` directory and do not run `firebase deploy --only functions`.
 
-1. Install Node.js 22 and the Firebase CLI, sign in with `firebase login`, and confirm `.firebaserc` points to your project.
-2. In Firebase App Check, register the Android app with Play Integrity. For local debug builds, copy the debug App Check token from Logcat into the Firebase App Check debug-token settings.
-3. Set SMTP secrets and a long random HMAC secret from a terminal; never commit them:
-
-   ```text
-   firebase functions:secrets:set SMTP_HOST
-   firebase functions:secrets:set SMTP_PORT
-   firebase functions:secrets:set SMTP_USER
-   firebase functions:secrets:set SMTP_PASSWORD
-   firebase functions:secrets:set SMTP_FROM
-   firebase functions:secrets:set OTP_HMAC_SECRET
-   ```
-
-4. Deploy the server and security rules with `firebase deploy --only functions,firestore:rules`.
-5. Build and install the Android app. New accounts receive a six-digit email code before the password screen appears.
+For local Android builds, register the App Check debug token from Logcat in the Firebase App Check debug-token settings. For Play Store/release builds, configure Play Integrity.
 
 The account screen supports password changes, Firebase password-reset emails, Google profile photos, gallery profile photos, and account deletion. Account deletion asks for the current sign-in credential, then removes that account's Firestore backup, profile picture, reviews, Firebase Authentication user, and local account database on the device.
 

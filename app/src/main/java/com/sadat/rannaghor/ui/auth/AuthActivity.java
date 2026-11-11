@@ -11,32 +11,27 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.functions.FirebaseFunctions;
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.CloudBackupManager;
 
-import java.util.HashMap;
-import java.util.Map;
 
-/** Email/password and Google sign-in, with a server-verified email-code signup flow. */
+/** Email/password and Google sign-in, using Firebase's free email-link verification flow. */
 public class AuthActivity extends AppCompatActivity {
     public static final String EXTRA_START_CREATE = "start_create_account";
 
     private static final int MODE_LOGIN = 0;
     private static final int MODE_CREATE = 1;
     private static final int CREATE_EMAIL = 0;
-    private static final int CREATE_CODE = 1;
-    private static final int CREATE_PASSWORD = 2;
+    private static final int CREATE_PASSWORD = 1;
+    private static final int CREATE_VERIFY = 2;
 
     private FirebaseAuth auth;
-    private FirebaseFunctions functions;
     private EditText emailInput, passwordInput, confirmPasswordInput, codeInput;
     private TextView title, subtitle, verifiedEmail, status, primary, forgot, resend, modeButton;
     private View passwordLayout, confirmPasswordLayout;
     private int mode = MODE_LOGIN;
     private int createStep = CREATE_EMAIL;
     private String verifiedEmailAddress;
-    private String verificationTicket;
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,7 +40,7 @@ public class AuthActivity extends AppCompatActivity {
         findViewById(R.id.buttonAuthBack).setOnClickListener(v -> finish());
         primary.setOnClickListener(v -> onPrimaryAction());
         forgot.setOnClickListener(v -> sendPasswordReset());
-        resend.setOnClickListener(v -> sendVerificationCode());
+        resend.setOnClickListener(v -> sendVerificationEmail());
         modeButton.setOnClickListener(v -> toggleMode());
         findViewById(R.id.buttonAuthGoogle).setOnClickListener(v -> startGoogleSignIn());
 
@@ -53,7 +48,6 @@ public class AuthActivity extends AppCompatActivity {
             showStatus(getString(R.string.firebase_setup_needed));
         } else {
             auth = FirebaseAuth.getInstance();
-            functions = FirebaseFunctions.getInstance("us-central1");
         }
         if (getIntent().getBooleanExtra(EXTRA_START_CREATE, false)) mode = MODE_CREATE;
         renderMode();
@@ -83,7 +77,6 @@ public class AuthActivity extends AppCompatActivity {
         } else {
             mode = MODE_LOGIN;
             createStep = CREATE_EMAIL;
-            verificationTicket = null;
         }
         clearStatus();
         renderMode();
@@ -91,15 +84,15 @@ public class AuthActivity extends AppCompatActivity {
 
     private void renderMode() {
         boolean loginMode = mode == MODE_LOGIN;
-        boolean needEmail = loginMode || createStep != CREATE_PASSWORD;
+        boolean needEmail = loginMode || createStep == CREATE_EMAIL;
         emailInput.setVisibility(needEmail ? View.VISIBLE : View.GONE);
         emailInput.setEnabled(loginMode || createStep == CREATE_EMAIL);
-        verifiedEmail.setVisibility(!loginMode && createStep == CREATE_PASSWORD ? View.VISIBLE : View.GONE);
-        codeInput.setVisibility(!loginMode && createStep == CREATE_CODE ? View.VISIBLE : View.GONE);
+        verifiedEmail.setVisibility(!loginMode && createStep != CREATE_EMAIL ? View.VISIBLE : View.GONE);
+        codeInput.setVisibility(View.GONE);
         passwordLayout.setVisibility(loginMode || (!loginMode && createStep == CREATE_PASSWORD) ? View.VISIBLE : View.GONE);
         confirmPasswordLayout.setVisibility(!loginMode && createStep == CREATE_PASSWORD ? View.VISIBLE : View.GONE);
         forgot.setVisibility(loginMode ? View.VISIBLE : View.GONE);
-        resend.setVisibility(!loginMode && createStep == CREATE_CODE ? View.VISIBLE : View.GONE);
+        resend.setVisibility(!loginMode && createStep == CREATE_VERIFY ? View.VISIBLE : View.GONE);
         findViewById(R.id.buttonAuthGoogle).setVisibility(View.VISIBLE);
 
         if (loginMode) {
@@ -109,19 +102,20 @@ public class AuthActivity extends AppCompatActivity {
             modeButton.setText("Create an account");
         } else if (createStep == CREATE_EMAIL) {
             title.setText("Create your account");
-            subtitle.setText("We’ll email you a six-digit verification code first.");
-            primary.setText("Send verification code");
+            subtitle.setText("Start with your email address. Firebase will verify it by email link.");
+            primary.setText("Continue");
             modeButton.setText("I already have an account · Log in");
-        } else if (createStep == CREATE_CODE) {
-            title.setText("Verify your email");
-            subtitle.setText("Enter the six-digit code we sent to your email address.");
-            primary.setText("Verify code");
-            modeButton.setText("Back to log in");
-        } else {
+        } else if (createStep == CREATE_PASSWORD) {
             title.setText("Set your password");
-            subtitle.setText("Your email is verified. Create a password of at least six characters.");
+            subtitle.setText("Create a password of at least six characters. We’ll send a verification link next.");
             verifiedEmail.setText(verifiedEmailAddress);
             primary.setText("Create account");
+            modeButton.setText("Back to log in");
+        } else {
+            title.setText("Verify your email");
+            subtitle.setText("Open the verification link in your inbox, then return here and tap I’ve verified.");
+            verifiedEmail.setText(verifiedEmailAddress);
+            primary.setText("I’ve verified");
             modeButton.setText("Back to log in");
         }
     }
@@ -129,9 +123,9 @@ public class AuthActivity extends AppCompatActivity {
     private void onPrimaryAction() {
         if (auth == null) return;
         if (mode == MODE_LOGIN) login();
-        else if (createStep == CREATE_EMAIL) sendVerificationCode();
-        else if (createStep == CREATE_CODE) verifyCode();
-        else completeSignup();
+        else if (createStep == CREATE_EMAIL) continueCreate();
+        else if (createStep == CREATE_PASSWORD) completeSignup();
+        else checkEmailVerified();
     }
 
     private String validatedEmail() {
@@ -155,55 +149,16 @@ public class AuthActivity extends AppCompatActivity {
         });
     }
 
-    private void sendVerificationCode() {
+    private void continueCreate() {
         String address = validatedEmail();
         if (address == null) return;
-        if (functions == null) { showStatus("Email verification isn’t configured for this Firebase project yet."); return; }
-        setBusy(true, "Sending verification code…");
-        Map<String, Object> data = new HashMap<>();
-        data.put("email", address);
-        functions.getHttpsCallable("requestEmailCode").call(data)
-                .addOnSuccessListener(result -> {
-                    verifiedEmailAddress = address;
-                    createStep = CREATE_CODE;
-                    codeInput.setText("");
-                    setBusy(false, "Check your inbox for the six-digit code.");
-                    renderMode();
-                    codeInput.requestFocus();
-                })
-                .addOnFailureListener(error -> fail(error,
-                        "Could not send the code. The secure email-code service may not be deployed yet."));
-    }
-
-    private void verifyCode() {
-        String code = codeInput.getText().toString().trim();
-        if (code.length() != 6 || !code.matches("[0-9]{6}")) {
-            codeInput.setError("Enter the six-digit code");
-            return;
-        }
-        setBusy(true, "Verifying code…");
-        Map<String, Object> data = new HashMap<>();
-        data.put("email", verifiedEmailAddress);
-        data.put("code", code);
-        functions.getHttpsCallable("verifyEmailCode").call(data)
-                .addOnSuccessListener(result -> {
-                    Object payload = result.getData();
-                    if (payload instanceof Map) {
-                        Object ticket = ((Map<?, ?>) payload).get("verificationTicket");
-                        verificationTicket = ticket instanceof String ? (String) ticket : null;
-                    }
-                    if (verificationTicket == null || verificationTicket.isEmpty()) {
-                        fail(null, "The server didn’t return a verification session. Try again.");
-                        return;
-                    }
-                    createStep = CREATE_PASSWORD;
-                    passwordInput.setText("");
-                    confirmPasswordInput.setText("");
-                    setBusy(false, "Email verified.");
-                    renderMode();
-                    passwordInput.requestFocus();
-                })
-                .addOnFailureListener(error -> fail(error, "That code is invalid or expired."));
+        verifiedEmailAddress = address;
+        createStep = CREATE_PASSWORD;
+        passwordInput.setText("");
+        confirmPasswordInput.setText("");
+        clearStatus();
+        renderMode();
+        passwordInput.requestFocus();
     }
 
     private void completeSignup() {
@@ -211,23 +166,47 @@ public class AuthActivity extends AppCompatActivity {
         String confirmation = confirmPasswordInput.getText().toString();
         if (password.length() < 6) { passwordInput.setError("Use at least six characters"); return; }
         if (!password.equals(confirmation)) { confirmPasswordInput.setError("Passwords don’t match"); return; }
-        if (verificationTicket == null) { fail(null, "Verify your email again before setting a password."); return; }
         setBusy(true, "Creating your account…");
-        Map<String, Object> data = new HashMap<>();
-        data.put("email", verifiedEmailAddress);
-        data.put("verificationTicket", verificationTicket);
-        data.put("password", password);
-        functions.getHttpsCallable("completeEmailSignup").call(data)
+        auth.createUserWithEmailAndPassword(verifiedEmailAddress, password)
                 .addOnSuccessListener(result -> {
-                    Object payload = result.getData();
-                    Object token = payload instanceof Map ? ((Map<?, ?>) payload).get("customToken") : null;
-                    if (!(token instanceof String)) { fail(null, "The server didn’t finish creating the account."); return; }
-                    auth.signInWithCustomToken((String) token).addOnCompleteListener(this, signIn -> {
-                        if (signIn.isSuccessful()) finishSuccessfully();
-                        else fail(signIn.getException(), "Account created, but automatic sign-in failed. Please log in.");
-                    });
+                    if (result.getUser() == null) { fail(null, "Account was not created. Please try again."); return; }
+                    createStep = CREATE_VERIFY;
+                    renderMode();
+                    result.getUser().sendEmailVerification()
+                            .addOnSuccessListener(unused -> {
+                                setBusy(false, "Verification email sent. Check your inbox and spam folder.");
+                            })
+                            .addOnFailureListener(error -> {
+                                renderMode();
+                                fail(error, "Account created, but the verification email could not be sent. Tap Resend email.");
+                            });
                 })
                 .addOnFailureListener(error -> fail(error, "Could not create your account."));
+    }
+
+    private void checkEmailVerified() {
+        if (auth.getCurrentUser() == null) {
+            fail(null, "Sign in again, then open the verification email and return here.");
+            return;
+        }
+        setBusy(true, "Checking email verification…");
+        auth.getCurrentUser().reload().addOnCompleteListener(this, task -> {
+            if (task.isSuccessful() && auth.getCurrentUser() != null && auth.getCurrentUser().isEmailVerified()) {
+                finishSuccessfully();
+            } else if (!task.isSuccessful()) {
+                fail(task.getException(), "Could not check verification yet. Try again.");
+            } else {
+                setBusy(false, "We haven’t received confirmation yet. Open the email link, then try again.");
+            }
+        });
+    }
+
+    private void sendVerificationEmail() {
+        if (auth.getCurrentUser() == null) { showStatus("Create your account first, then request the verification email."); return; }
+        setBusy(true, "Sending verification email…");
+        auth.getCurrentUser().sendEmailVerification()
+                .addOnSuccessListener(unused -> setBusy(false, "A new verification link was sent. Check your inbox and spam folder."))
+                .addOnFailureListener(error -> fail(error, "Could not resend the verification email."));
     }
 
     private void sendPasswordReset() {
