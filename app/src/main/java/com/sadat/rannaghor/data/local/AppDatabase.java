@@ -75,6 +75,18 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     }
 
+    /** Removes a deleted account's private local favourites, plans, and shopping list. */
+    public static void deleteUserDatabase(Context context, String uid) {
+        if (uid == null || uid.isEmpty()) return;
+        Context appContext = context.getApplicationContext();
+        String databaseName = "rannaghor_user_" + stableHash(uid) + ".db";
+        synchronized (AppDatabase.class) {
+            AppDatabase instance = INSTANCES.remove(databaseName);
+            if (instance != null) instance.close();
+            appContext.deleteDatabase(databaseName);
+        }
+    }
+
     private static String stableHash(String value) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));

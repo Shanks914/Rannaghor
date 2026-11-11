@@ -6,6 +6,17 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    match /users/{userId}/profile/{profileId} {
+      allow read: if request.auth != null && request.auth.uid == userId && profileId == 'details';
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && profileId == 'details'
+        && request.resource.data.keys().hasOnly(['avatarBase64', 'updatedAt'])
+        && request.resource.data.avatarBase64 is string
+        && request.resource.data.avatarBase64.size() <= 700000;
+      allow delete: if request.auth != null && request.auth.uid == userId && profileId == 'details';
+    }
+
     match /recipeReviews/{reviewId} {
       function validReview() {
         return request.resource.data.keys().hasAll(['recipeId', 'uid', 'recipeName', 'imageUrl', 'rating', 'review', 'updatedAt'])

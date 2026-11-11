@@ -1,36 +1,54 @@
 package com.sadat.rannaghor.ui.home;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.annotation.Nullable;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.sadat.rannaghor.R;
 import com.sadat.rannaghor.data.repository.CloudBackupManager;
 import com.sadat.rannaghor.data.repository.RecipeReviewRepository;
+import com.sadat.rannaghor.data.repository.UserProfileRepository;
+import com.sadat.rannaghor.data.local.AppDatabase;
 import com.sadat.rannaghor.model.RecipeCategory;
 import com.sadat.rannaghor.ui.category.RecipeCategoryActivity;
 import com.sadat.rannaghor.ui.favorites.FavoritesActivity;
 import com.sadat.rannaghor.ui.planner.PlannerActivity;
 import com.sadat.rannaghor.ui.auth.AuthActivity;
+import com.sadat.rannaghor.ui.auth.GoogleSignInHelper;
 import com.sadat.rannaghor.ui.recipes.RecipesActivity;
 import com.sadat.rannaghor.ui.shopping.ShoppingListActivity;
 import com.sadat.rannaghor.util.ReminderScheduler;
 import com.sadat.rannaghor.util.PlanReminderScheduler;
+
+import java.util.List;
 
 /** Main navigation hub and account entry point. */
 public class HomeActivity extends AppCompatActivity {
@@ -38,7 +56,8 @@ public class HomeActivity extends AppCompatActivity {
     private boolean firebaseConfigured;
     private View accountPanel;
     private TextView accountButton, loginButton, createAccountButton;
-    private EditText emailInput, passwordInput;
+    private ImageView homeAvatar;
+    private ActivityResultLauncher<String> profilePicker;
     private static final int REQUEST_ACCOUNT_AUTH = 411;
     private static final int REQUEST_PRIVATE_FEATURE_AUTH = 412;
     private Class<?> pendingDestination;
@@ -46,6 +65,7 @@ public class HomeActivity extends AppCompatActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        profilePicker = registerForActivityResult(new ActivityResultContracts.GetContent(), this::onProfileImageSelected);
         setContentView(R.layout.activity_home);
 
         firebaseConfigured = CloudBackupManager.isConfigured(this);
@@ -60,14 +80,13 @@ public class HomeActivity extends AppCompatActivity {
 
         accountPanel = findViewById(R.id.accountPanel);
         accountButton = findViewById(R.id.buttonAccount);
-        emailInput = findViewById(R.id.editEmail);
-        passwordInput = findViewById(R.id.editPassword);
+        homeAvatar = findViewById(R.id.imageHomeAvatar);
         loginButton = findViewById(R.id.buttonLogin);
         createAccountButton = findViewById(R.id.buttonCreateAccount);
 
         accountButton.setOnClickListener(v -> toggleAccountPanel());
-        loginButton.setOnClickListener(v -> authenticate(false));
-        createAccountButton.setOnClickListener(v -> authenticate(true));
+        loginButton.setOnClickListener(v -> launchAuth(false));
+        createAccountButton.setOnClickListener(v -> launchAuth(true));
 
         findViewById(R.id.actionRecipes).setOnClickListener(v -> startActivity(new Intent(this, RecipesActivity.class)));
         findViewById(R.id.actionPlanner).setOnClickListener(v -> openPersonalDestination(PlannerActivity.class));
@@ -121,6 +140,8 @@ public class HomeActivity extends AppCompatActivity {
         TextView ratingCount = content.findViewById(R.id.textAccountRatingCount);
         TextView reviewCount = content.findViewById(R.id.textAccountReviewCount);
         TextView countError = content.findViewById(R.id.textAccountCountError);
+        ImageView avatar = content.findViewById(R.id.imageAccountPhoto);
+        loadProfilePhoto(userId, avatar);
         email.setText(auth.getCurrentUser().getEmail() == null ? "Signed-in account" : auth.getCurrentUser().getEmail());
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setView(content)
@@ -136,6 +157,18 @@ public class HomeActivity extends AppCompatActivity {
             auth.signOut();
             updateAccountSummary();
             Toast.makeText(this, "You are signed out", Toast.LENGTH_SHORT).show();
+        });
+        content.findViewById(R.id.buttonChooseProfilePhoto).setOnClickListener(v -> {
+            dialog.dismiss();
+            profilePicker.launch("image/*");
+        });
+        content.findViewById(R.id.buttonChangePassword).setOnClickListener(v -> {
+            dialog.dismiss();
+            openChangePasswordDialog();
+        });
+        content.findViewById(R.id.buttonDeleteAccount).setOnClickListener(v -> {
+            dialog.dismiss();
+            confirmAccountDeletion();
         });
         new RecipeReviewRepository(this).getUserReviewCounts(userId, new RecipeReviewRepository.UserReviewCountsCallback() {
             @Override public void onLoaded(int ratings, int writtenReviews) {
@@ -155,35 +188,14 @@ public class HomeActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void authenticate(boolean createAccount) {
+    private void launchAuth(boolean createAccount) {
         if (!firebaseConfigured || auth == null) {
             Toast.makeText(this, R.string.firebase_setup_needed, Toast.LENGTH_LONG).show();
             return;
         }
-        String email = emailInput.getText().toString().trim();
-        String password = passwordInput.getText().toString();
-        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailInput.setError("Enter a valid email address");
-            return;
-        }
-        if (password.length() < 6) {
-            passwordInput.setError("Use at least 6 characters");
-            return;
-        }
-        setAuthButtonsEnabled(false);
-        if (createAccount) {
-            auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, task -> {
-                setAuthButtonsEnabled(true);
-                if (task.isSuccessful() && task.getResult().getUser() != null) syncSignedInUser();
-                else showAuthError(R.string.firebase_signup_failed, task.getException());
-            });
-        } else {
-            auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(this, task -> {
-                setAuthButtonsEnabled(true);
-                if (task.isSuccessful() && task.getResult().getUser() != null) syncSignedInUser();
-                else showAuthError(R.string.firebase_login_failed, task.getException());
-            });
-        }
+        Intent intent = new Intent(this, AuthActivity.class);
+        intent.putExtra(AuthActivity.EXTRA_START_CREATE, createAccount);
+        startActivityForResult(intent, REQUEST_ACCOUNT_AUTH);
     }
 
     private void syncSignedInUser() {
@@ -205,7 +217,191 @@ public class HomeActivity extends AppCompatActivity {
         accountButton.setContentDescription(signedIn ? "Account for " + (email == null ? "signed-in user" : email) : "Sign in");
         if (signedIn) {
             accountPanel.setVisibility(View.GONE);
+            loadProfilePhoto(auth.getCurrentUser().getUid(), homeAvatar);
+        } else if (homeAvatar != null) {
+            Glide.with(this).clear(homeAvatar);
+            homeAvatar.setImageResource(R.drawable.ic_profile);
         }
+    }
+
+    private void loadProfilePhoto(String uid, ImageView target) {
+        FirebaseUser user = auth == null ? null : auth.getCurrentUser();
+        String googlePhoto = user == null || user.getPhotoUrl() == null ? null : user.getPhotoUrl().toString();
+        Glide.with(target).load(googlePhoto).circleCrop().placeholder(R.drawable.ic_profile).into(target);
+        UserProfileRepository.loadAvatar(uid, encoded -> {
+            if (isFinishing() || encoded == null || encoded.isEmpty()) return;
+            byte[] image = UserProfileRepository.decodeAvatar(encoded);
+            if (image != null) Glide.with(target).load(image).circleCrop().placeholder(R.drawable.ic_profile).into(target);
+        });
+    }
+
+    private void onProfileImageSelected(Uri uri) {
+        if (uri == null || auth == null || auth.getCurrentUser() == null) return;
+        String uid = auth.getCurrentUser().getUid();
+        Toast.makeText(this, "Saving profile photo…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                String encoded = UserProfileRepository.compressAvatar(this, uri);
+                UserProfileRepository.saveAvatar(uid, encoded, error -> {
+                    if (isFinishing()) return;
+                    if (error != null) Toast.makeText(this, "Could not save profile photo: " + error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    else {
+                        updateAccountSummary();
+                        Toast.makeText(this, "Profile photo updated", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Exception error) {
+                runOnUiThread(() -> Toast.makeText(this, "Could not read that image.", Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
+    private void openChangePasswordDialog() {
+        FirebaseUser user = auth == null ? null : auth.getCurrentUser();
+        if (user == null) return;
+        if (!hasProvider(user, "password")) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Google account password")
+                    .setMessage("This account signs in with Google. Manage its password in your Google Account.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Open Google Account", (dialog, which) -> {
+                        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://myaccount.google.com/security"))); }
+                        catch (Exception ignored) { Toast.makeText(this, "Could not open your browser.", Toast.LENGTH_SHORT).show(); }
+                    }).show();
+            return;
+        }
+        View content = getLayoutInflater().inflate(R.layout.dialog_change_password, null, false);
+        EditText current = content.findViewById(R.id.editCurrentPassword);
+        EditText next = content.findViewById(R.id.editNewPassword);
+        EditText confirm = content.findViewById(R.id.editConfirmPassword);
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle("Change password")
+                .setView(content)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Update password", null)
+                .create();
+        dialog.setOnShowListener(ignored -> dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String oldPassword = current.getText().toString();
+            String newPassword = next.getText().toString();
+            if (oldPassword.isEmpty()) { current.setError("Enter your current password"); return; }
+            if (newPassword.length() < 6) { next.setError("Use at least six characters"); return; }
+            if (!newPassword.equals(confirm.getText().toString())) { confirm.setError("Passwords don’t match"); return; }
+            String email = user.getEmail();
+            if (email == null) { Toast.makeText(this, "This account has no email address.", Toast.LENGTH_LONG).show(); return; }
+            user.reauthenticate(EmailAuthProvider.getCredential(email, oldPassword)).addOnSuccessListener(unused ->
+                    user.updatePassword(newPassword).addOnSuccessListener(done -> {
+                        dialog.dismiss();
+                        Toast.makeText(this, "Password updated", Toast.LENGTH_SHORT).show();
+                    }).addOnFailureListener(error -> Toast.makeText(this, "Could not update password: " + error.getLocalizedMessage(), Toast.LENGTH_LONG).show())
+            ).addOnFailureListener(error -> Toast.makeText(this, "Current password was not accepted.", Toast.LENGTH_LONG).show());
+        }));
+        dialog.show();
+    }
+
+    private void confirmAccountDeletion() {
+        FirebaseUser user = auth == null ? null : auth.getCurrentUser();
+        if (user == null) return;
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Delete account permanently?")
+                .setMessage("This deletes your sign-in, cloud backup, profile photo, ratings and reviews, and this phone’s favourites, meal plans, and shopping list. This can’t be undone.")
+                .setNegativeButton("Keep account", null)
+                .setPositiveButton("Continue", (dialog, which) -> reauthenticateForDeletion(user))
+                .show();
+    }
+
+    private void reauthenticateForDeletion(FirebaseUser user) {
+        if (hasProvider(user, "password")) {
+            View content = getLayoutInflater().inflate(R.layout.dialog_confirm_password, null, false);
+            EditText password = content.findViewById(R.id.editDeleteConfirmPassword);
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Confirm it’s you")
+                    .setMessage("Enter your password to delete this account.")
+                    .setView(content)
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Verify and delete", (dialog, which) -> {
+                        String email = user.getEmail();
+                        if (email == null) return;
+                        AuthCredential credential = EmailAuthProvider.getCredential(email, password.getText().toString());
+                        user.reauthenticate(credential).addOnSuccessListener(unused -> deleteAccountData(user))
+                                .addOnFailureListener(error -> Toast.makeText(this, "Password was not accepted.", Toast.LENGTH_LONG).show());
+                    }).show();
+        } else if (hasProvider(user, "google.com")) {
+            GoogleSignInHelper.requestCredential(this, new GoogleSignInHelper.Callback() {
+                @Override public void onCredential(AuthCredential credential) {
+                    user.reauthenticate(credential).addOnSuccessListener(unused -> deleteAccountData(user))
+                            .addOnFailureListener(error -> Toast.makeText(HomeActivity.this, "Could not verify this Google account.", Toast.LENGTH_LONG).show());
+                }
+                @Override public void onError(Exception error) {
+                    Toast.makeText(HomeActivity.this, error.getLocalizedMessage() == null ? "Google verification was cancelled." : error.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        } else {
+            Toast.makeText(this, "Log in again with this account, then retry deletion.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void deleteAccountData(FirebaseUser user) {
+        String uid = user.getUid();
+        new Thread(() -> {
+            List<com.sadat.rannaghor.model.MealPlanEntry> plans = AppDatabase.getInstanceForUser(getApplicationContext(), uid).mealPlanDao().getAll();
+            for (com.sadat.rannaghor.model.MealPlanEntry plan : plans) {
+                PlanReminderScheduler.cancel(getApplicationContext(), plan.id, uid);
+            }
+            runOnUiThread(() -> deleteCloudDataThenAccount(user));
+        }).start();
+    }
+
+    private void deleteCloudDataThenAccount(FirebaseUser user) {
+        String uid = user.getUid();
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        Task<Void> backup = firestore.collection("users").document(uid).collection("backups").document("current").delete();
+        Task<Void> profile = firestore.collection("users").document(uid).collection("profile").document("details").delete();
+        Tasks.whenAll(backup, profile)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) throw task.getException();
+                    return deleteReviewBatch(uid);
+                })
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) throw task.getException();
+                    return user.delete();
+                })
+                .addOnCompleteListener(this, task -> {
+                    if (!task.isSuccessful()) {
+                        Toast.makeText(this, "Could not delete account data: " + (task.getException() == null ? "check your connection and Firestore rules." : task.getException().getLocalizedMessage()), Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    AppDatabase.deleteUserDatabase(getApplicationContext(), uid);
+                    auth.signOut();
+                    updateAccountSummary();
+                    Toast.makeText(this, "Account and its data deleted", Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private Task<Void> deleteReviewBatch(String uid) {
+        TaskCompletionSource<Void> completion = new TaskCompletionSource<>();
+        deleteNextReviewBatch(uid, completion);
+        return completion.getTask();
+    }
+
+    private void deleteNextReviewBatch(String uid, TaskCompletionSource<Void> completion) {
+        FirebaseFirestore.getInstance().collection("recipeReviews")
+                .whereEqualTo("uid", uid).limit(400).get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.isEmpty()) { completion.setResult(null); return; }
+                    com.google.firebase.firestore.WriteBatch batch = FirebaseFirestore.getInstance().batch();
+                    for (DocumentSnapshot review : snapshot.getDocuments()) batch.delete(review.getReference());
+                    batch.commit().addOnSuccessListener(unused -> {
+                        if (snapshot.size() < 400) completion.setResult(null);
+                        else deleteNextReviewBatch(uid, completion);
+                    }).addOnFailureListener(completion::setException);
+                }).addOnFailureListener(completion::setException);
+    }
+
+    private boolean hasProvider(FirebaseUser user, String provider) {
+        for (com.google.firebase.auth.UserInfo info : user.getProviderData()) {
+            if (provider.equals(info.getProviderId())) return true;
+        }
+        return false;
     }
 
     @Override protected void onResume() {
@@ -241,15 +437,4 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    private void setAuthButtonsEnabled(boolean enabled) {
-        loginButton.setEnabled(enabled);
-        createAccountButton.setEnabled(enabled);
-        loginButton.setAlpha(enabled ? 1f : 0.5f);
-        createAccountButton.setAlpha(enabled ? 1f : 0.5f);
-    }
-
-    private void showAuthError(int messageId, Exception error) {
-        String details = error == null || error.getLocalizedMessage() == null ? "Please check your details and try again." : error.getLocalizedMessage();
-        Toast.makeText(this, getString(messageId, details), Toast.LENGTH_LONG).show();
-    }
 }

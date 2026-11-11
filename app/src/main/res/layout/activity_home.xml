@@ -41,6 +41,17 @@
                 android:fontFamily="@font/red_hat_display"
                     android:textStyle="bold" />
 
+                <ImageView
+                    android:id="@+id/imageHomeAvatar"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_avatar"
+                    android:clipToOutline="true"
+                    android:contentDescription="Profile picture"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_profile" />
+
                 <TextView
                     android:id="@+id/buttonAccount"
                     android:layout_width="wrap_content"
@@ -76,32 +87,6 @@
                     android:textColor="@color/text_primary"
                     android:textSize="17sp"
                     android:textStyle="bold" />
-
-                <EditText
-                    android:id="@+id/editEmail"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_search_box"
-                    android:hint="@string/email_address"
-                    android:inputType="textEmailAddress"
-                    android:paddingHorizontal="14dp"
-                    android:singleLine="true"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_secondary" />
-
-                <EditText
-                    android:id="@+id/editPassword"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_search_box"
-                    android:hint="@string/password"
-                    android:inputType="textPassword"
-                    android:paddingHorizontal="14dp"
-                    android:singleLine="true"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_secondary" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
